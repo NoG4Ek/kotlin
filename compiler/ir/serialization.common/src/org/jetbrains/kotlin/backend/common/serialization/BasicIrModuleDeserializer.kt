@@ -32,7 +32,7 @@ abstract class BasicIrModuleDeserializer(
 ) :
     IrModuleDeserializer(moduleDescriptor, libraryAbiVersion) {
 
-    private val fileToDeserializerMap = mutableMapOf<IrFile, IrFileDeserializer>()
+    protected val fileToDeserializerMap = mutableMapOf<IrFile, IrFileDeserializer>()
 
     private val moduleDeserializationState = ModuleDeserializationState(linker, this)
 
@@ -91,6 +91,13 @@ abstract class BasicIrModuleDeserializer(
     override fun contains(idSig: IdSignature): Boolean = idSig in moduleReversedFileIndex
 
     override fun deserializeIrSymbol(idSig: IdSignature, symbolKind: BinarySymbolData.SymbolKind): IrSymbol {
+        val fileLocalDeserializationState = scheduleTopLevelSignatureDeserialization(idSig)
+        return fileLocalDeserializationState.fileDeserializer.symbolDeserializer.deserializeIrSymbol(idSig, symbolKind).also {
+            linker.deserializedSymbols.add(it)
+        }
+    }
+
+    protected fun scheduleTopLevelSignatureDeserialization(idSig: IdSignature): FileDeserializationState {
         val topLevelSignature = idSig.topLevelSignature()
         val fileLocalDeserializationState = moduleReversedFileIndex[topLevelSignature]
             ?: error("No file for $topLevelSignature (@ $idSig) in module $moduleDescriptor")
@@ -98,19 +105,15 @@ abstract class BasicIrModuleDeserializer(
         fileLocalDeserializationState.addIdSignature(topLevelSignature)
         moduleDeserializationState.enqueueFile(fileLocalDeserializationState)
 
-        return fileLocalDeserializationState.fileDeserializer.symbolDeserializer.deserializeIrSymbol(idSig, symbolKind).also {
-            linker.deserializedSymbols.add(it)
-        }
+        return fileLocalDeserializationState
     }
 
     override val moduleFragment: IrModuleFragment = IrModuleFragmentImpl(moduleDescriptor, linker.builtIns, emptyList())
 
-    private fun deserializeIrFile(fileProto: ProtoFile, fileIndex: Int, moduleDeserializer: IrModuleDeserializer, allowErrorNodes: Boolean): IrFile {
-
-        val fileReader = IrLibraryFileFromKlib(moduleDeserializer.klib, fileIndex)
-        val file = fileReader.createFile(moduleFragment, fileProto)
-
-        val fileDeserializationState = FileDeserializationState(
+    open fun createFileDeserializationState(
+        file: IrFile, fileReader: IrLibraryFile, fileProto: ProtoFile, fileIndex: Int, moduleDeserializer: IrModuleDeserializer, allowErrorNodes: Boolean
+    ): FileDeserializationState {
+        return FileDeserializationState(
             linker,
             file,
             fileReader,
@@ -122,6 +125,14 @@ abstract class BasicIrModuleDeserializer(
             useGlobalSignatures,
             linker::handleNoModuleDeserializerFound,
         )
+    }
+
+    private fun deserializeIrFile(fileProto: ProtoFile, fileIndex: Int, moduleDeserializer: IrModuleDeserializer, allowErrorNodes: Boolean): IrFile {
+
+        val fileReader = IrLibraryFileFromKlib(moduleDeserializer.klib, fileIndex)
+        val file = fileReader.createFile(moduleFragment, fileProto)
+
+        val fileDeserializationState = createFileDeserializationState(file, fileReader, fileProto, fileIndex, moduleDeserializer, allowErrorNodes)
 
         fileToDeserializerMap[file] = fileDeserializationState.fileDeserializer
 
