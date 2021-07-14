@@ -41,9 +41,45 @@ public class FirSpecificBlackBoxCodegenTestGenerated extends AbstractFirBlackBox
         }
 
         @Test
+        @TestMetadata("applicability.kt")
+        public void testApplicability() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/applicability.kt");
+        }
+
+        @Test
+        @TestMetadata("callResolution.kt")
+        public void testCallResolution() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/callResolution.kt");
+        }
+
+        @Test
+        @TestMetadata("mayBe.kt")
+        public void testMayBe() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/mayBe.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInConstructor.kt")
+        public void testPropertyInConstructor() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/propertyInConstructor.kt");
+        }
+
+        @Test
+        @TestMetadata("refiedTypeParameters.kt")
+        public void testRefiedTypeParameters() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/refiedTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("simpleMulticatch.kt")
         public void testSimpleMulticatch() throws Exception {
             runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/simpleMulticatch.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/typeParameter.kt");
         }
     }
 }
