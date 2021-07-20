@@ -65,6 +65,7 @@ void PrintThrowable(KRef);
 
 namespace kotlin {
 
+void ProcessUnhandledException(KRef exception) noexcept;
 void RUNTIME_NORETURN ProcessUnhandledExceptionAndTerminate(KRef exception) noexcept;
 
 } // namespace kotlin
