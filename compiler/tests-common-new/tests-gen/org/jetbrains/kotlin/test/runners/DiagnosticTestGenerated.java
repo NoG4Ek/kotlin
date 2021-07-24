@@ -22782,6 +22782,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("RedeclaredValueParameters.kt")
+            public void testRedeclaredValueParameters() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/redeclarations/RedeclaredValueParameters.kt");
+            }
+
+            @Test
             @TestMetadata("RedeclaringPrivateToFile.kt")
             public void testRedeclaringPrivateToFile() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/redeclarations/RedeclaringPrivateToFile.kt");
