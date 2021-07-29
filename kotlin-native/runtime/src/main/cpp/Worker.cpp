@@ -798,7 +798,14 @@ Worker* WorkerInit(MemoryState* memoryState) {
   if (::g_worker != nullptr) {
       worker = ::g_worker;
   } else {
-      worker = theState()->addWorkerUnlocked(WorkerExceptionHandling::kDefault, nullptr, WorkerKind::kOther);
+      switch (compiler::workerExceptionHandling()) {
+          case compiler::WorkerExceptionHandling::kLegacy:
+              worker = theState()->addWorkerUnlocked(WorkerExceptionHandling::kLog, nullptr, WorkerKind::kOther);
+              break;
+          case compiler::WorkerExceptionHandling::kUseHook:
+              worker = theState()->addWorkerUnlocked(WorkerExceptionHandling::kDefault, nullptr, WorkerKind::kOther);
+              break;
+      }
       ::g_worker = worker;
   }
   worker->setThread(pthread_self());
@@ -1098,11 +1105,12 @@ JobKind Worker::processQueueElement(bool blocking) {
 extern "C" {
 
 KInt Kotlin_Worker_startInternal(KBoolean errorReporting, KRef customName) {
-    return startWorker(errorReporting ? WorkerExceptionHandling::kDefault : WorkerExceptionHandling::kIgnore, customName);
-}
-
-KInt Kotlin_Worker_startInternalDeprecated(KRef customName) {
-    return startWorker(WorkerExceptionHandling::kLog, customName);
+    switch (compiler::workerExceptionHandling()) {
+      case compiler::WorkerExceptionHandling::kLegacy:
+        return startWorker(errorReporting ? WorkerExceptionHandling::kLog : WorkerExceptionHandling::kIgnore, customName);
+      case compiler::WorkerExceptionHandling::kUseHook:
+        return startWorker(errorReporting ? WorkerExceptionHandling::kDefault : WorkerExceptionHandling::kIgnore, customName);
+    }
 }
 
 KInt Kotlin_Worker_currentInternal() {

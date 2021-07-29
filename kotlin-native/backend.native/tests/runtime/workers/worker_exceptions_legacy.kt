@@ -6,7 +6,7 @@ import kotlin.native.concurrent.*
 
 @Test
 fun testExecuteAfterStartLegacy() {
-    val worker = Worker.startDeprecated()
+    val worker = Worker.start()
     worker.executeAfter(0L, {
         throw Error("testExecuteAfterStartLegacy error")
     }.freeze())
@@ -15,7 +15,7 @@ fun testExecuteAfterStartLegacy() {
 
 @Test
 fun testExecuteStartLegacy() {
-    val worker = Worker.startDeprecated()
+    val worker = Worker.start()
     val future = worker.execute(TransferMode.SAFE, {}) {
         throw Error("testExecuteStartLegacy error")
     }

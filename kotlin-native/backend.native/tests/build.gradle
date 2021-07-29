@@ -1008,12 +1008,17 @@ task worker_exception_messages(type: KonanLocalTest) {
     source = "runtime/workers/worker_exception_messages.kt"
 }
 
-task worker_exceptions(type: KonanLocalTest) {
+standaloneTest("worker_exceptions") {
+    flags = ["-tr", "-Xworker-exception-handling=use-hook"]
     enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
+    outputChecker = {
+        !it.contains("testExecuteAfterStartQuiet error") && it.contains("testExecuteStart error") && !it.contains("testExecuteStartQuiet error")
+    }
     source = "runtime/workers/worker_exceptions.kt"
 }
 
-task worker_exceptions_legacy(type: KonanLocalTest) {
+standaloneTest("worker_exceptions_legacy") {
+    flags = ["-tr", "-Xworker-exception-handling=legacy"]
     enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
     outputChecker = {
         it.contains("testExecuteAfterStartLegacy error") && it.contains("testExecuteStartLegacy error")
@@ -1022,6 +1027,7 @@ task worker_exceptions_legacy(type: KonanLocalTest) {
 }
 
 standaloneTest("worker_exceptions_terminate") {
+    flags = ["-Xworker-exception-handling=use-hook"]
     enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
     expectedExitStatusChecker = { it != 0 }
     outputChecker = {
@@ -1030,7 +1036,17 @@ standaloneTest("worker_exceptions_terminate") {
     source = "runtime/workers/worker_exceptions_terminate.kt"
 }
 
+standaloneTest("worker_exceptions_terminate_legacy") {
+    flags = ["-Xworker-exception-handling=legacy"]
+    enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
+    outputChecker = {
+        it.contains("some error") && it.contains("Will not happen")
+    }
+    source = "runtime/workers/worker_exceptions_terminate.kt"
+}
+
 standaloneTest("worker_exceptions_terminate_hook") {
+    flags = ["-Xworker-exception-handling=use-hook"]
     enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
     outputChecker = {
         it.contains("hook called") && !it.contains("some error") && it.contains("Will happen")
@@ -1038,7 +1054,17 @@ standaloneTest("worker_exceptions_terminate_hook") {
     source = "runtime/workers/worker_exceptions_terminate_hook.kt"
 }
 
+standaloneTest("worker_exceptions_terminate_hook_legacy") {
+    flags = ["-Xworker-exception-handling=legacy"]
+    enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
+    outputChecker = {
+        !it.contains("hook called") && it.contains("some error") && it.contains("Will happen")
+    }
+    source = "runtime/workers/worker_exceptions_terminate_hook.kt"
+}
+
 standaloneTest("worker_exceptions_terminate_current") {
+    flags = ["-Xworker-exception-handling=use-hook"]
     enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
     expectedExitStatusChecker = { it != 0 }
     outputChecker = {
@@ -1047,10 +1073,29 @@ standaloneTest("worker_exceptions_terminate_current") {
     source = "runtime/workers/worker_exceptions_terminate_current.kt"
 }
 
+standaloneTest("worker_exceptions_terminate_current_legacy") {
+    flags = ["-Xworker-exception-handling=legacy"]
+    enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
+    outputChecker = {
+        it.contains("some error") && it.contains("Will not happen")
+    }
+    source = "runtime/workers/worker_exceptions_terminate_current.kt"
+}
+
 standaloneTest("worker_exceptions_terminate_hook_current") {
+    flags = ["-Xworker-exception-handling=use-hook"]
     enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
     outputChecker = {
         it.contains("hook called") && !it.contains("some error") && it.contains("Will happen")
+    }
+    source = "runtime/workers/worker_exceptions_terminate_hook_current.kt"
+}
+
+standaloneTest("worker_exceptions_terminate_hook_current_legacy") {
+    flags = ["-Xworker-exception-handling=legacy"]
+    enabled = (project.testTarget != 'wasm32') // Workers need pthreads.
+    outputChecker = {
+        !it.contains("hook called") && it.contains("some error") && it.contains("Will happen")
     }
     source = "runtime/workers/worker_exceptions_terminate_hook_current.kt"
 }
