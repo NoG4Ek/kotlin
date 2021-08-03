@@ -88,6 +88,15 @@ enum class WorkerExceptionHandling {
     kLog, // Deprecated.
 };
 
+WorkerExceptionHandling workerExceptionHandling() noexcept {
+    switch (compiler::workerExceptionHandling()) {
+        case compiler::WorkerExceptionHandling::kLegacy:
+            return WorkerExceptionHandling::kLog;
+        case compiler::WorkerExceptionHandling::kUseHook:
+            return WorkerExceptionHandling::kDefault;
+    }
+}
+
 struct Job {
   enum JobKind kind;
   union {
@@ -798,14 +807,7 @@ Worker* WorkerInit(MemoryState* memoryState) {
   if (::g_worker != nullptr) {
       worker = ::g_worker;
   } else {
-      switch (compiler::workerExceptionHandling()) {
-          case compiler::WorkerExceptionHandling::kLegacy:
-              worker = theState()->addWorkerUnlocked(WorkerExceptionHandling::kLog, nullptr, WorkerKind::kOther);
-              break;
-          case compiler::WorkerExceptionHandling::kUseHook:
-              worker = theState()->addWorkerUnlocked(WorkerExceptionHandling::kDefault, nullptr, WorkerKind::kOther);
-              break;
-      }
+      worker = theState()->addWorkerUnlocked(workerExceptionHandling(), nullptr, WorkerKind::kOther);
       ::g_worker = worker;
   }
   worker->setThread(pthread_self());
@@ -1105,12 +1107,7 @@ JobKind Worker::processQueueElement(bool blocking) {
 extern "C" {
 
 KInt Kotlin_Worker_startInternal(KBoolean errorReporting, KRef customName) {
-    switch (compiler::workerExceptionHandling()) {
-      case compiler::WorkerExceptionHandling::kLegacy:
-        return startWorker(errorReporting ? WorkerExceptionHandling::kLog : WorkerExceptionHandling::kIgnore, customName);
-      case compiler::WorkerExceptionHandling::kUseHook:
-        return startWorker(errorReporting ? WorkerExceptionHandling::kDefault : WorkerExceptionHandling::kIgnore, customName);
-    }
+    return startWorker(errorReporting ? workerExceptionHandling() : WorkerExceptionHandling::kIgnore, customName);
 }
 
 KInt Kotlin_Worker_currentInternal() {
