@@ -91,7 +91,7 @@ void RUNTIME_NORETURN processUnhandledExceptionAndTerminate(KRef exception) noex
 #else
     try {
         Kotlin_runUnhandledExceptionHook(exception);
-        konan::abort();
+        terminateWithUnhandledException(exception);
     } catch (ExceptionObjHolder& e) {
         terminateWithUnhandledException(e.GetExceptionObject());
     }
