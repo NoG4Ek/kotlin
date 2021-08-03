@@ -82,8 +82,9 @@ internal fun makeEntryPoint(context: Context): IrFunction {
                     +irCall(context.ir.symbols.processUnhandledException).apply {
                         putValueArgument(0, irGet(catchParameter))
                     }
-                    // TODO: This is called if exception hook has completed successfully. Should it be 0 or abort instead?
-                    +irReturn(irInt(1))
+                    +irCall(context.ir.symbols.terminateWithUnhandledException).apply {
+                        putValueArgument(0, irGet(catchParameter))
+                    }
                 }
             }
         }
