@@ -2640,14 +2640,18 @@ standaloneTest("kt-37572") {
 
 standaloneTest("custom_hook") {
     enabled = (project.testTarget != 'wasm32') // Uses exceptions.
-    goldValue = "value 42: Error\n"
+    outputChecker = {
+        it.contains("value 42: Error") && it.contains("Uncaught Kotlin exception: kotlin.Error: an error")
+    }
     expectedExitStatusChecker = { it != 0 }
     source = "runtime/exceptions/custom_hook.kt"
 }
 
 standaloneTest("custom_hook_memory_leak") {
     enabled = (project.testTarget != 'wasm32') // Uses exceptions.
-    goldValue = "Hook 42\n"
+    outputChecker = {
+        it.contains("Hook 42") && it.contains("Uncaught Kotlin exception: kotlin.Error: an error")
+    }
     expectedExitStatusChecker = { it != 0 }
     source = "runtime/exceptions/custom_hook_memory_leak.kt"
 }
@@ -2658,7 +2662,9 @@ standaloneTest("custom_hook_get") {
 
 standaloneTest("custom_hook_no_reset") {
     enabled = (project.testTarget != 'wasm32') // Uses exceptions.
-    goldValue = "Hook called\n"
+    outputChecker = {
+        it.contains("Hook called") && it.contains("Uncaught Kotlin exception: kotlin.Error: some error")
+    }
     expectedExitStatusChecker = { it != 0 }
     source = "runtime/exceptions/custom_hook_no_reset.kt"
 }
@@ -2690,7 +2696,7 @@ standaloneTest("custom_hook_terminate") {
 standaloneTest("custom_hook_terminate_unhandled_exception") {
     enabled = (project.testTarget != 'wasm32') // Uses exceptions.
     outputChecker = {
-        it.contains("Hook called")
+        it.contains("Hook called") && it.contains("Uncaught Kotlin exception: kotlin.Error: some error") && !it.contains("Not going to happen")
     }
     expectedExitStatusChecker = { it != 0 }
     source = "runtime/exceptions/custom_hook_terminate_unhandled_exception.kt"
