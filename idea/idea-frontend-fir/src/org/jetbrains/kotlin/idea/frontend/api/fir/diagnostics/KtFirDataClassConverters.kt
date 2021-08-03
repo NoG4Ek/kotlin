@@ -1158,6 +1158,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         TypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic.c,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1165,6 +1166,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.THROWABLE_TYPE_MISMATCH) { firDiagnostic ->
         ThrowableTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1172,6 +1174,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.CONDITION_TYPE_MISMATCH) { firDiagnostic ->
         ConditionTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1248,6 +1251,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         AssignmentTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic.c,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1572,6 +1576,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firSymbolBuilder.buildSymbol(firDiagnostic.c),
+            firDiagnostic.d,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1641,6 +1646,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic.b.source!!.psi as KtExpression,
             firDiagnostic.c,
+            firDiagnostic.d,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -2235,6 +2241,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         InitializerTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic.c,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
