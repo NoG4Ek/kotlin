@@ -29,6 +29,7 @@ private object EmptyCompletion : Continuation<Any?> {
     override val context: CoroutineContext
         get() = EmptyCoroutineContext
 
+    @OptIn(ExperimentalStdlibApi::class)
     override fun resumeWith(result: Result<Any?>) {
         val exception = result.exceptionOrNull() ?: return
         processUnhandledException(exception)
