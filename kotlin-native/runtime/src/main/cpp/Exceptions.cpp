@@ -72,11 +72,12 @@ class {
 } concurrentTerminateWrapper;
 
 void RUNTIME_NORETURN terminateWithUnhandledException(KRef exception) {
-#if KONAN_REPORT_BACKTRACE_TO_IOS_CRASH_LOG
     if (exception != nullptr) {
+        ReportUnhandledException(exception);
+#if KONAN_REPORT_BACKTRACE_TO_IOS_CRASH_LOG
         ReportBacktraceToIosCrashLog(exception);
-    }
 #endif
+    }
     konan::abort();
 }
 
@@ -86,14 +87,12 @@ void RUNTIME_NORETURN processUnhandledExceptionAndTerminate(KRef exception) noex
     //  - native, if the throwing code was called from ObjC/Swift or if the exception occured during initialization of globals.
     kotlin::ThreadStateGuard guard(kotlin::ThreadState::kRunnable, /* reentrant = */ true);
 #if KONAN_NO_EXCEPTIONS
-    ReportUnhandledException(exception);
     terminateWithUnhandledException(exception);
 #else
     try {
         Kotlin_runUnhandledExceptionHook(exception);
         konan::abort();
     } catch (ExceptionObjHolder& e) {
-        ReportUnhandledException(e.GetExceptionObject());
         terminateWithUnhandledException(e.GetExceptionObject());
     }
 #endif

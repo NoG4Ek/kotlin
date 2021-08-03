@@ -78,7 +78,6 @@ public fun processUnhandledException(throwable: Throwable) {
     try {
         runUnhandledExceptionHook(throwable)
     } catch (e: Throwable) {
-        ReportUnhandledException(e)
         terminateWithUnhandledException(e)
     }
 }
