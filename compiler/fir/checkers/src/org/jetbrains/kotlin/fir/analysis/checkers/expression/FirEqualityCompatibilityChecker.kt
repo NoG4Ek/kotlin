@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.fir.expressions.FirEqualityOperatorCall
 import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.analysis.checkers.ConeTypeCompatibilityChecker.areCompatible
+import org.jetbrains.kotlin.fir.analysis.checkers.ConeTypeCompatibilityChecker.getCompatibility
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.render
 
@@ -33,7 +33,7 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
         val intersectionType = inferenceContext.intersectTypesOrNull(listOf(lType, rType)) as? ConeIntersectionType ?: return
 
         val compatibility = try {
-            intersectionType.intersectedTypes.areCompatible(inferenceContext)
+            intersectionType.intersectedTypes.getCompatibility(inferenceContext)
         } catch (e: Throwable) {
             throw IllegalStateException(
                 "Exception while determining type compatibility: type ${intersectionType.render()}, " +
