@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+private val compileTimeExtensionFunctions = setOf(Name.identifier("floorDiv"), Name.identifier("mod"))
+
 fun ConeKotlinType.canBeUsedForConstVal(): Boolean = with(lowerBoundIfFlexible()) { isPrimitive || isString || isUnsignedType }
 
 internal fun checkConstantArguments(
@@ -142,6 +144,11 @@ internal fun checkConstantArguments(
                         ) {
                             return ConstantArgumentKind.NOT_CONST
                         }
+                        checkConstantArguments(exp, session)?.let { return it }
+                    }
+                }
+                in compileTimeExtensionFunctions -> {
+                    for (exp in (expression as FirCall).arguments.plus(expression.extensionReceiver)) {
                         checkConstantArguments(exp, session)?.let { return it }
                     }
                 }
