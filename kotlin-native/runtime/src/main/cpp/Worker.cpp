@@ -49,6 +49,25 @@ OBJ_GETTER(WorkerLaunchpad, KRef);
 
 }  // extern "C"
 
+namespace {
+
+enum class WorkerExceptionHandling {
+    kDefault, // Perform the default processing of unhandled exception.
+    kIgnore, // Do nothing on exception escaping job unit.
+    kLog, // Deprecated.
+};
+
+WorkerExceptionHandling workerExceptionHandling() noexcept {
+    switch (compiler::workerExceptionHandling()) {
+        case compiler::WorkerExceptionHandling::kLegacy:
+            return WorkerExceptionHandling::kLog;
+        case compiler::WorkerExceptionHandling::kUseHook:
+            return WorkerExceptionHandling::kDefault;
+    }
+}
+
+} // namespace
+
 #if WITH_WORKERS
 
 namespace {
@@ -81,21 +100,6 @@ enum class WorkerKind {
   kNative,  // Workers created using Worker.start public API.
   kOther,   // Any other kind of workers.
 };
-
-enum class WorkerExceptionHandling {
-    kDefault, // Perform the default processing of unhandled exception.
-    kIgnore, // Do nothing on exception escaping job unit.
-    kLog, // Deprecated.
-};
-
-WorkerExceptionHandling workerExceptionHandling() noexcept {
-    switch (compiler::workerExceptionHandling()) {
-        case compiler::WorkerExceptionHandling::kLegacy:
-            return WorkerExceptionHandling::kLog;
-        case compiler::WorkerExceptionHandling::kUseHook:
-            return WorkerExceptionHandling::kDefault;
-    }
-}
 
 struct Job {
   enum JobKind kind;
