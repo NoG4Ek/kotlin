@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.interpreter.state.reflection
 
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
@@ -46,7 +47,7 @@ internal class KFunctionState(
     }
 
     companion object {
-        fun createInvokeFunction(
+        private fun createInvokeFunction(
             irFunction: IrFunction, irClass: IrClass, hasDispatchReceiver: Boolean, hasExtensionReceiver: Boolean
         ): IrSimpleFunction {
             val invokeFunction = irClass.declarations
@@ -93,6 +94,16 @@ internal class KFunctionState(
             functionClass.declarations += newFunctionToInvoke
             return newFunctionToInvoke
         }
+
+        private fun isCallToNonAbstractMethodOfFunInterface(expression: IrCall): Boolean {
+            val owner = expression.symbol.owner
+            return owner.hasFunInterfaceParent() && owner.modality != Modality.ABSTRACT
+        }
+
+        fun isCallToInvokeOrMethodFromFunInterface(expression: IrCall): Boolean {
+            val owner = expression.symbol.owner
+            return owner.name == OperatorNameConventions.INVOKE || owner.hasFunInterfaceParent()
+        }
     }
 
     constructor(
@@ -111,7 +122,8 @@ internal class KFunctionState(
     }
 
     override fun getIrFunctionByIrCall(expression: IrCall): IrFunction? {
-        if (expression.symbol.owner.name == OperatorNameConventions.INVOKE) return invokeSymbol.owner
+        if (isCallToNonAbstractMethodOfFunInterface(expression)) return super.getIrFunctionByIrCall(expression)
+        if (isCallToInvokeOrMethodFromFunInterface(expression)) return invokeSymbol.owner
         return super.getIrFunctionByIrCall(expression)
     }
 

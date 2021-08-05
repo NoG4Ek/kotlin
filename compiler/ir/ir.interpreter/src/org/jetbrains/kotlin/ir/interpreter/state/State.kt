@@ -93,5 +93,5 @@ internal fun State.checkNullability(
 
 internal fun State?.mustBeHandledAsReflection(call: IrCall): Boolean {
     if (call.symbol.owner.origin == IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER) return false
-    return this is ReflectionState && !(this is KFunctionState && call.symbol.owner.name == OperatorNameConventions.INVOKE)
+    return this is ReflectionState && !(this is KFunctionState && KFunctionState.isCallToInvokeOrMethodFromFunInterface(call))
 }

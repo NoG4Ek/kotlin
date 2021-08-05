@@ -273,3 +273,7 @@ internal fun IrFunctionAccessExpression.getSuperEnumCall(): IrEnumConstructorCal
         else -> TODO("$delegatingCall is unexpected")
     }
 }
+
+internal fun IrFunction.hasFunInterfaceParent(): Boolean {
+    return this.parentClassOrNull?.isFun == true
+}

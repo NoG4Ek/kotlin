@@ -11,8 +11,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
-import org.jetbrains.kotlin.ir.interpreter.exceptions.InterpreterError
-import org.jetbrains.kotlin.ir.interpreter.exceptions.InterpreterTimeOutError
+import org.jetbrains.kotlin.ir.interpreter.exceptions.*
 import org.jetbrains.kotlin.ir.interpreter.exceptions.handleUserException
 import org.jetbrains.kotlin.ir.interpreter.exceptions.verify
 import org.jetbrains.kotlin.ir.interpreter.proxy.CommonProxy.Companion.asProxy
@@ -481,7 +480,8 @@ class IrInterpreter(internal val environment: IrInterpreterEnvironment, internal
                     else -> callStack.pushState(state)
                 }
             }
-            else -> TODO("${expression.operator} not implemented")
+            IrTypeOperator.SAM_CONVERSION -> callStack.pushState(state)
+            else -> stop { "Type operator ${expression.operator} is not supported for interpretation" }
         }
     }
 
