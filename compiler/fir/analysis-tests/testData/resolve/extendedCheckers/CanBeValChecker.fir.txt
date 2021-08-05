@@ -171,11 +171,11 @@ FILE: CanBeValChecker.kt
         lvar a: R|kotlin/String?|
         lval unused: R|kotlin/Int| = Int(0)
         when () {
-            ==(R|<local>/args|.R|kotlin/Array.size|, Int(1)) ->  {
+            ==(R|<local>/args|.R|SubstitutionOverride<kotlin/Array.size: R|kotlin/Int|>|, Int(1)) ->  {
                 R|<local>/a| = R|<local>/args|.R|SubstitutionOverride<kotlin/Array.get: R|kotlin/String?|>|(Int(0))
             }
             else ->  {
-                R|<local>/a| = R|<local>/args|.R|kotlin/Any.toString|()
+                R|<local>/a| = R|<local>/args|.R|SubstitutionOverride<kotlin/Array.toString: R|kotlin/String|>|()
                 when () {
                     !=(R|<local>/a|, Null(null)) && R|<local>/a|.R|kotlin/Any.equals|(String(cde)) ->  {
                         ^main Unit
