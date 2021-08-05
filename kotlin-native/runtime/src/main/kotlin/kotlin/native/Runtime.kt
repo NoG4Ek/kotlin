@@ -75,14 +75,8 @@ public fun getUnhandledExceptionHook(): ReportUnhandledExceptionHook? {
  * Perform the default processing of unhandled exception.
  */
 @ExperimentalStdlibApi
-@ExportForCppRuntime("Kotlin_processUnhandledException")
-public fun processUnhandledException(throwable: Throwable) {
-    try {
-        runUnhandledExceptionHook(throwable)
-    } catch (e: Throwable) {
-        terminateWithUnhandledException(e)
-    }
-}
+@GCUnsafeCall("Kotlin_processUnhandledException")
+public external fun processUnhandledException(throwable: Throwable): Unit
 
 /*
  * Terminate the program with unhandled exception. Does not run unhandled exception hook from

@@ -34,9 +34,6 @@
 extern "C" void Kotlin_runUnhandledExceptionHook(KRef exception);
 extern "C" void ReportUnhandledException(KRef exception);
 
-// Defined in Runtime.kt
-extern "C" void Kotlin_processUnhandledException(KRef exception);
-
 void ThrowException(KRef exception) {
   RuntimeAssert(exception != nullptr && IsInstance(exception, theThrowableTypeInfo),
                 "Throwing something non-throwable");
@@ -72,26 +69,23 @@ class {
 } concurrentTerminateWrapper;
 
 void RUNTIME_NORETURN terminateWithUnhandledException(KRef exception) {
-    if (exception != nullptr) {
+    kotlin::AssertThreadState(kotlin::ThreadState::kRunnable);
+    concurrentTerminateWrapper([exception]() {
         ReportUnhandledException(exception);
 #if KONAN_REPORT_BACKTRACE_TO_IOS_CRASH_LOG
         ReportBacktraceToIosCrashLog(exception);
 #endif
-    }
-    konan::abort();
+        konan::abort();
+    });
 }
 
-void RUNTIME_NORETURN processUnhandledExceptionAndTerminate(KRef exception) noexcept {
-    // Use the reentrant switch because both states are possible here:
-    //  - runnable, if the exception occured in a pure Kotlin thread (except initialization of globals).
-    //  - native, if the throwing code was called from ObjC/Swift or if the exception occured during initialization of globals.
-    kotlin::ThreadStateGuard guard(kotlin::ThreadState::kRunnable, /* reentrant = */ true);
+void processUnhandledException(KRef exception) noexcept {
+    kotlin::AssertThreadState(kotlin::ThreadState::kRunnable);
 #if KONAN_NO_EXCEPTIONS
     terminateWithUnhandledException(exception);
 #else
     try {
         Kotlin_runUnhandledExceptionHook(exception);
-        terminateWithUnhandledException(exception);
     } catch (ExceptionObjHolder& e) {
         terminateWithUnhandledException(e.GetExceptionObject());
     }
@@ -113,24 +107,33 @@ ALWAYS_INLINE RUNTIME_NOTHROW OBJ_GETTER(Kotlin_getExceptionObject, void* holder
 namespace {
 // Copy, move and assign would be safe, but not much useful, so let's delete all (rule of 5)
 class TerminateHandler : private kotlin::Pinned {
+  RUNTIME_NORETURN static void queuedHandler() {
+      concurrentTerminateWrapper([]() {
+          // Not a Kotlin exception - call default handler
+          instance().queuedHandler_();
+      });
+  }
 
   // In fact, it's safe to call my_handler directly from outside: it will do the job and then invoke original handler,
   // even if it has not been initialized yet. So one may want to make it public and/or not the class member
   RUNTIME_NORETURN static void kotlinHandler() {
-    concurrentTerminateWrapper([]() {
       if (auto currentException = std::current_exception()) {
         try {
           std::rethrow_exception(currentException);
         } catch (ExceptionObjHolder& e) {
-          processUnhandledExceptionAndTerminate(e.GetExceptionObject());
+          // Use the reentrant switch because both states are possible here:
+          //  - runnable, if the exception occured in a pure Kotlin thread (except initialization of globals).
+          //  - native, if the throwing code was called from ObjC/Swift or if the exception occured during initialization of globals.
+          kotlin::ThreadStateGuard guard(kotlin::ThreadState::kRunnable, /* reentrant = */ true);
+          processUnhandledException(e.GetExceptionObject());
+          terminateWithUnhandledException(e.GetExceptionObject());
         } catch (...) {
           // Not a Kotlin exception - call default handler
-          instance().queuedHandler_();
+          queuedHandler();
         }
       }
       // Come here in case of direct terminate() call or unknown exception - go to default terminate handler.
-      instance().queuedHandler_();
-    });
+      queuedHandler();
   }
 
   using QH = __attribute__((noreturn)) void(*)();
@@ -170,13 +173,23 @@ void SetKonanTerminateHandler() {
 #endif // !KONAN_NO_EXCEPTIONS
 
 extern "C" void RUNTIME_NORETURN Kotlin_terminateWithUnhandledException(KRef exception) {
-    concurrentTerminateWrapper([exception]() { terminateWithUnhandledException(exception); });
+    kotlin::AssertThreadState(kotlin::ThreadState::kRunnable);
+    terminateWithUnhandledException(exception);
+}
+
+extern "C" void Kotlin_processUnhandledException(KRef exception) {
+    kotlin::AssertThreadState(kotlin::ThreadState::kRunnable);
+    processUnhandledException(exception);
 }
 
 void kotlin::ProcessUnhandledException(KRef exception) noexcept {
-    Kotlin_processUnhandledException(exception);
+    // This may be called from any state, do reentrant state switch to runnable.
+    kotlin::ThreadStateGuard guard(kotlin::ThreadState::kRunnable, /* reentrant = */ true);
+    processUnhandledException(exception);
 }
 
-void RUNTIME_NORETURN kotlin::ProcessUnhandledExceptionAndTerminate(KRef exception) noexcept {
-    concurrentTerminateWrapper([exception]() { processUnhandledExceptionAndTerminate(exception); });
+void RUNTIME_NORETURN kotlin::TerminateWithUnhandledException(KRef exception) noexcept {
+    // This may be called from any state, do reentrant state switch to runnable.
+    kotlin::ThreadStateGuard guard(kotlin::ThreadState::kRunnable, /* reentrant = */ true);
+    terminateWithUnhandledException(exception);
 }
