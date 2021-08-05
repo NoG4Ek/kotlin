@@ -41,7 +41,7 @@ internal open class InspectClassesForMultiModuleIC : DefaultTask() {
     @get:Internal
     internal val fileTrees
         get() = sourceSetOutputClassesDir?.map {
-            project.fileTree(it).include("**/*.class")
+            objects.fileTree().from(it).include("**/*.class")
         }
 
     @get:Internal
