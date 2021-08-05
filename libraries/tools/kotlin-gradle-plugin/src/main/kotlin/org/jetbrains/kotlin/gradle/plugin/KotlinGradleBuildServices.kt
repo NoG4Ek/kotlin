@@ -72,7 +72,7 @@ internal class KotlinGradleBuildServices private constructor(
             val kotlinGradleEsListenerProvider = project.provider {
                 val listeners = project.objects.listProperty(ReportStatistics::class.java)
                     .value(listOf<ReportStatistics>(ReportStatisticsToElasticSearch))
-                project.rootProject.extensions.findByType(BuildScanExtension::class.java)?.also { listeners.add(ReportStatisticsToBuildScan(it)) }
+                project.rootProject.extensions.findByName("buildScan")?.also { listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension)) }
                 KotlinBuildEsStatListener(project.rootProject.name, listeners.get())
             }
 
