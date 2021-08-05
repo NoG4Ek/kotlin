@@ -67,6 +67,7 @@ public fun setUnhandledExceptionHook(hook: ReportUnhandledExceptionHook): Report
  * Retrieve custom unhandled exception hook set by [setUnhandledExceptionHook].
  */
 @ExperimentalStdlibApi
+@SinceKotlin("1.6")
 public fun getUnhandledExceptionHook(): ReportUnhandledExceptionHook? {
     return UnhandledExceptionHookHolder.hook.value
 }
@@ -75,6 +76,7 @@ public fun getUnhandledExceptionHook(): ReportUnhandledExceptionHook? {
  * Perform the default processing of unhandled exception.
  */
 @ExperimentalStdlibApi
+@SinceKotlin("1.6")
 @GCUnsafeCall("Kotlin_processUnhandledException")
 public external fun processUnhandledException(throwable: Throwable): Unit
 
@@ -83,6 +85,7 @@ public external fun processUnhandledException(throwable: Throwable): Unit
  * [setUnhandledExceptionHook].
  */
 @ExperimentalStdlibApi
+@SinceKotlin("1.6")
 @GCUnsafeCall("Kotlin_terminateWithUnhandledException")
 public external fun terminateWithUnhandledException(throwable: Throwable): Nothing
 
