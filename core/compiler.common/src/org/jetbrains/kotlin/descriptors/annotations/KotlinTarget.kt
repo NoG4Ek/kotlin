@@ -79,34 +79,58 @@ enum class KotlinTarget(val description: String, val isDefault: Boolean = true) 
 
         val ALL_TARGET_SET: Set<KotlinTarget> = values().toSet()
 
+        val ANNOTATION_CLASS_LIST = listOf(ANNOTATION_CLASS, CLASS)
+
+        val LOCAL_CLASS_LIST = listOf(LOCAL_CLASS, CLASS)
+
+        val CLASS_LIST = listOf(CLASS_ONLY, CLASS)
+
+        val COMPANION_OBJECT_LIST = listOf(COMPANION_OBJECT, OBJECT, CLASS)
+
+        val OBJECT_LIST = listOf(OBJECT, CLASS)
+
+        val INTERFACE_LIST = listOf(INTERFACE, CLASS)
+
+        val ENUM_LIST = listOf(ENUM_CLASS, CLASS)
+
+        val ENUM_ENTRY_LIST = listOf(ENUM_ENTRY, PROPERTY, FIELD)
+
+        val PROPERTY_SETTER_LIST = listOf(PROPERTY_SETTER)
+
+        val PROPERTY_GETTER_LIST = listOf(PROPERTY_GETTER)
+
+        val FUNCTION_LIST = listOf(FUNCTION)
+
+        val FILE_LIST = listOf(FILE)
+
         fun classActualTargets(
             kind: ClassKind,
             isInnerClass: Boolean,
             isCompanionObject: Boolean,
             isLocalClass: Boolean
         ): List<KotlinTarget> = when (kind) {
-            ClassKind.ANNOTATION_CLASS -> listOf(ANNOTATION_CLASS, CLASS)
+            ClassKind.ANNOTATION_CLASS -> ANNOTATION_CLASS_LIST
             ClassKind.CLASS ->
                 // inner local classes should be CLASS_ONLY, not LOCAL_CLASS
                 if (!isInnerClass && isLocalClass) {
-                    listOf(LOCAL_CLASS, CLASS)
+                    LOCAL_CLASS_LIST
                 } else {
-                    listOf(CLASS_ONLY, CLASS)
+                    CLASS_LIST
                 }
             ClassKind.OBJECT ->
                 if (isCompanionObject) {
-                    listOf(COMPANION_OBJECT, OBJECT, CLASS)
+                    COMPANION_OBJECT_LIST
                 } else {
-                    listOf(OBJECT, CLASS)
+                    OBJECT_LIST
                 }
-            ClassKind.INTERFACE -> listOf(INTERFACE, CLASS)
+            ClassKind.INTERFACE -> INTERFACE_LIST
             ClassKind.ENUM_CLASS ->
                 if (isLocalClass) {
-                    listOf(LOCAL_CLASS, CLASS)
+                    LOCAL_CLASS_LIST
                 } else {
-                    listOf(ENUM_CLASS, CLASS)
+                    ENUM_LIST
                 }
-            ClassKind.ENUM_ENTRY -> listOf(ENUM_ENTRY, PROPERTY, FIELD)
+            ClassKind.ENUM_ENTRY -> ENUM_ENTRY_LIST
         }
 
         val USE_SITE_MAPPING: Map<AnnotationUseSiteTarget, KotlinTarget> = mapOf(
