@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.codegen.optimization
 
 import org.jetbrains.kotlin.codegen.TransformationMethodVisitor
+import org.jetbrains.kotlin.codegen.inline.InplaceArgumentsMethodTransformer
 import org.jetbrains.kotlin.codegen.optimization.boxing.PopBackwardPropagationTransformer
 import org.jetbrains.kotlin.codegen.optimization.boxing.RedundantBoxingMethodTransformer
 import org.jetbrains.kotlin.codegen.optimization.boxing.StackPeepholeOptimizationsTransformer
@@ -41,6 +42,7 @@ class OptimizationMethodVisitor(
 
     val normalizationMethodTransformer = CompositeMethodTransformer(
         FixStackWithLabelNormalizationMethodTransformer(),
+        InplaceArgumentsMethodTransformer(),
         MethodVerifier("AFTER mandatory stack transformations", generationState)
     )
 
