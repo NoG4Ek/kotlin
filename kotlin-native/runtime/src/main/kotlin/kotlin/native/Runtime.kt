@@ -64,7 +64,7 @@ public fun setUnhandledExceptionHook(hook: ReportUnhandledExceptionHook): Report
 }
 
 /**
- * Retrieve custom unhandled exception hook set by [setUnhandledExceptionHook].
+ * Returns a user-defined uncaught exception handler set by [setUnhandledExceptionHook] or `null` if no user-defined handlers were set.
  */
 @ExperimentalStdlibApi
 @SinceKotlin("1.6")
@@ -73,7 +73,11 @@ public fun getUnhandledExceptionHook(): ReportUnhandledExceptionHook? {
 }
 
 /**
- * Perform the default processing of unhandled exception.
+ * Performs the default processing of unhandled exception.
+ *
+ * If user-defined hook set by [setUnhandledExceptionHook] is present, calls it and returns.
+ * If the hook is not present, calls [terminateWithUnhandledException] with [throwable].
+ * If the hook fails with exception, calls [terminateWithUnhandledException] with exception from the hook.
  */
 @ExperimentalStdlibApi
 @SinceKotlin("1.6")
@@ -81,8 +85,10 @@ public fun getUnhandledExceptionHook(): ReportUnhandledExceptionHook? {
 public external fun processUnhandledException(throwable: Throwable): Unit
 
 /*
- * Terminate the program with unhandled exception. Does not run unhandled exception hook from
- * [setUnhandledExceptionHook].
+ * Terminates the program with the given [throwable] as an unhandled exception.
+ * User-defined hooks installed with [setUnhandledExceptionHook] are not invoked.
+ *
+ * `terminateWithUnhandledException` can be used to emulate an abrupt termination of the application with an uncaught exception.
  */
 @ExperimentalStdlibApi
 @SinceKotlin("1.6")
