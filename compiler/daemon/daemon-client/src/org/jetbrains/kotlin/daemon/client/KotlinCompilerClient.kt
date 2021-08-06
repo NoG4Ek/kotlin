@@ -377,7 +377,28 @@ object KotlinCompilerClient {
         val javaVersion = CompilerSystemProperties.JAVA_VERSION.value?.toIntOrNull()
         val javaIllegalAccessWorkaround =
             if (javaVersion != null && javaVersion >= 16)
-                listOf("--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED")
+                listOf(
+                    "--add-exports",
+                    "java.base/sun.nio.ch=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+                    "--add-exports",
+                    "--add-exports jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+                    "--add-exports",
+                    "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED"
+                )
             else emptyList()
         val args = listOf(
                    javaExecutable.absolutePath, "-cp", compilerId.compilerClasspath.joinToString(File.pathSeparator)) +
