@@ -11,6 +11,8 @@ import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.Logging
 import com.gradle.scan.plugin.BuildScanExtension
+import org.gradle.api.provider.Provider
+import org.gradle.tooling.events.OperationCompletionListener
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskExecutionResults
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskLoggers
@@ -22,7 +24,8 @@ import org.jetbrains.kotlin.gradle.report.configureReporting
 
 //Support Gradle 6 and less. Move to
 internal class KotlinGradleBuildServices private constructor(
-    private val gradle: Gradle
+    private val gradle: Gradle,
+    private vararg val gradleListenerProviders: Provider<out OperationCompletionListener>
 ) : BuildAdapter() {
 
     companion object {
@@ -65,27 +68,28 @@ internal class KotlinGradleBuildServices private constructor(
         @Synchronized
         fun getInstance(project: Project, listenerRegistryHolder: BuildEventsListenerRegistryHolder): KotlinGradleBuildServices {
             val log = Logging.getLogger(KotlinGradleBuildServices::class.java)
-            val kotlinGradleListenerProvider: org.gradle.api.provider.Provider<KotlinGradleBuildListener> = project.provider {
+            val kotlinGradleListenerProvider: Provider<KotlinGradleBuildListener> = project.provider {
                 KotlinGradleBuildListener(KotlinGradleFinishBuildHandler())
             }
 
             val kotlinGradleEsListenerProvider = project.provider {
-                val listeners = project.objects.listProperty(ReportStatistics::class.java)
+                val listeners = project.rootProject.objects.listProperty(ReportStatistics::class.java)
                     .value(listOf<ReportStatistics>(ReportStatisticsToElasticSearch))
-                project.rootProject.extensions.findByName("buildScan")?.also { listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension)) }
+                project.rootProject.extensions.findByName("buildScan")
+                    ?.also { listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension)) }
                 KotlinBuildEsStatListener(project.rootProject.name, listeners.get())
             }
 
-            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleListenerProvider)
-            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
-
             if (instance != null) {
                 log.kotlinDebug(ALREADY_INITIALIZED_MESSAGE)
+                instance!!.gradleListenerProviders.forEach { listenerRegistryHolder.listenerRegistry.onTaskCompletion(it) }
                 return instance!!
             }
 
             val gradle = project.gradle
-            val services = KotlinGradleBuildServices(gradle)
+            val services = KotlinGradleBuildServices(gradle, kotlinGradleListenerProvider, kotlinGradleEsListenerProvider)
+            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleListenerProvider)
+            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
 
             instance = services
 
