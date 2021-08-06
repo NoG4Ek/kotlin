@@ -34,7 +34,7 @@ public inline class Worker @PublishedApi internal constructor(val id: Int) {
          * Typically new worker may be needed for computations offload to another core, for IO it may be
          * better to use non-blocking IO combined with more lightweight coroutines.
          *
-         * @param errorReporting controls if an uncaught exceptions in the worker will be ignored.
+         * @param errorReporting controls if an uncaught exceptions in the worker will be reported.
          * @param name defines the optional name of this worker, if none - default naming is used.
          * @return worker object, usable across multiple concurrent contexts.
          */
