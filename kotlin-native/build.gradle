@@ -303,6 +303,12 @@ task distCompiler(type: Copy) {
         into('konan')
         include('**/*.properties')
         filter(ReplaceTokens, tokens: [compilerVersion: konanVersionFull.toString()])
+        // Use smaller version of LLVM distribution in dist.
+        filter(ReplaceTokens,
+                beginToken: '$',
+                endToken: '',
+                tokens: [("llvm.${hostName}.dev".toString()): "\$llvm.${hostName}.user".toString()]
+        )
     }
     if (experimentalEnabled) {
         file('konan/experimentalTargetsEnabled').text = ""
