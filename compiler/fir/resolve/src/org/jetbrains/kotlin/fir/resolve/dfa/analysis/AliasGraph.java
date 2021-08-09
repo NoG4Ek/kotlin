@@ -139,7 +139,7 @@ public class AliasGraph {
 	public AliasNode findNodeRV(RealVariable rv) {
 		for (AliasNode node: _varToNode.values()) {
 			for (RealVariableAndType rvat: node._vars) {
-				if (rvat.getVariable() == rv) {
+				if (rvat.getVariable().equals(rv)) {
 					return node;
 				}
 			}
@@ -402,6 +402,18 @@ public class AliasGraph {
 		if (startNode == null) return null;
 
 		return new HashSet<>(startNode.getVariables());
+	}
+
+	public boolean removeVarRV(RealVariable rv) {
+		AliasNode nodeRV = findNodeRV(rv);
+		if (nodeRV == null) return false;
+		for (RealVariableAndType var: nodeRV.getVariables()) {
+			if (var.getVariable().equals(rv)) {
+				nodeRV.removeVariable(var);
+				return true;
+			}
+		}
+		return false;
 	}
 
 
