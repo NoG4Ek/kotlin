@@ -17,6 +17,12 @@ public class MustAnalysis {
 		reachableInstr = new TreeSet<>();
 		instrToGraph = new HashMap<>();
 
+		Set<MustAnalysis> start = new HashSet<>();
+		start.add(this);
+		Instruction startI = new PhiInstruction("-1", start);
+		instrToGraph.put(startI, new AliasGraph());
+		lastInstr = startI;
+
 		idCounter = 0;
 	}
 
@@ -74,10 +80,15 @@ public class MustAnalysis {
 							Iterator<Instruction> curAncestor = predecessors.iterator();
 							Instruction ancestor = curAncestor.next();
 							if (csinstr == ancestor) {
-								if (lastInstr != null && remLastInstr) {
+								if (!lastInstr.id.equals("-1") && remLastInstr) {
 									remLastInstr = false;
 									AliasGraph predecessorGraph = instrToGraph.get(lastInstr);
 									g = new AliasGraph(predecessorGraph);
+								} else {
+									if (lastInstr.id.equals("-1")) {
+										AliasGraph predecessorGraph = instrToGraph.get(lastInstr);
+										g = new AliasGraph(predecessorGraph);
+									}
 								}
 							} else {
 								AliasGraph predecessorGraph = instrToGraph.get(ancestor);

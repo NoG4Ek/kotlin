@@ -19,10 +19,12 @@ import org.jetbrains.kotlin.fir.resolve.dfa.utils.Pair;
 public class AliasGraph {
 	Set<AliasNode> _nodes;
 	Map<RealVariableAndType, AliasNode> _varToNode;
+	Map<RealVariable, RealVariableAndType> linkToRVAT;
 
 	public AliasGraph() {
 		_nodes     = new HashSet<>();
 		_varToNode = new HashMap<>();
+		linkToRVAT = new HashMap<>();
 	}
 
 	public AliasGraph(AliasGraph orig) {
@@ -32,6 +34,7 @@ public class AliasGraph {
 	public AliasGraph(AliasGraph orig, boolean markVars) {
 		this();
 
+		linkToRVAT = orig.linkToRVAT;
 		Map<AliasNode, AliasNode> origToNewNode = new HashMap<>();
 		for (AliasNode origNode : orig._nodes) {
 			if (markVars)
@@ -136,15 +139,13 @@ public class AliasGraph {
 		return true;
 	}
 
-	public AliasNode findNodeRV(RealVariable rv) {
-		for (AliasNode node: _varToNode.values()) {
-			for (RealVariableAndType rvat: node._vars) {
-				if (rvat.getVariable().equals(rv)) {
-					return node;
-				}
-			}
-		}
-		return null;
+	public boolean addLinkRVtoRVAT(RealVariable rv, RealVariableAndType rvat){
+		linkToRVAT.put(rv, rvat);
+		return true;
+	}
+
+	public RealVariableAndType getRVATfromRV(RealVariable rv){
+		return linkToRVAT.get(rv);
 	}
 
 	public void addNode(AliasNode node) {
@@ -398,21 +399,18 @@ public class AliasGraph {
 
 
 	public Set<RealVariableAndType> allAliases(RealVariable accessPath) {
-		AliasNode startNode = findNodeRV(accessPath);
+		AliasNode startNode = lookupVar(getRVATfromRV(accessPath));
 		if (startNode == null) return null;
 
 		return new HashSet<>(startNode.getVariables());
 	}
 
-	public boolean removeVarRV(RealVariable rv) {
-		AliasNode nodeRV = findNodeRV(rv);
+	public boolean removeVar(RealVariableAndType var) {
+		AliasNode nodeRV = lookupVar(var);
 		if (nodeRV == null) return false;
-		for (RealVariableAndType var: nodeRV.getVariables()) {
-			if (var.getVariable().equals(rv)) {
-				nodeRV.removeVariable(var);
-				return true;
-			}
-		}
+
+		nodeRV.removeVariable(var);
+		linkToRVAT.remove(var.getVariable());
 		return false;
 	}
 
