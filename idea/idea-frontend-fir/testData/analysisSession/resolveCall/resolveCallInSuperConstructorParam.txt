@@ -1,3 +1,0 @@
-KtFunctionCall:
-argumentMapping = {  }
-targetFunction = /to(<receiver>: A, other: B): A

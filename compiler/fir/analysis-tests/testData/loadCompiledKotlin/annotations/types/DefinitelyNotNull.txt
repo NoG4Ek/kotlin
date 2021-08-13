@@ -1,1 +1,0 @@
-public final fun <T> foo(x: R|T!!|, y: R|kotlin/collections/List<T!!>|, z: R|(T!!) -> T!!|): R|T!!|

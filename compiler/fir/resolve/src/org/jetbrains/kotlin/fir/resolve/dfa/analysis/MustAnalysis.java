@@ -147,8 +147,11 @@ public class MustAnalysis {
 		switch (csinstr.kind) {
 			case MOVE:
 				return handleMoveInstruction(csinstr, graph);
+			case IDENTITY:
+				return handleIdentityInstruction(csinstr, graph);
 			case PHI:
 				return handlePhiInstruction(csinstr, graph);
+
 			default:
 				System.out.println("!!!!!!!!!!!!!!!!!!!!");
 				assert false;
@@ -175,6 +178,28 @@ public class MustAnalysis {
 		if (left != null) {
 			graph.removeVariableFromNode(left, instr.toVar);
 		}
+		graph.addVariableToNode(right, instr.toVar);
+
+		graph.gcNodes();
+		return true;
+	}
+
+	boolean handleIdentityInstruction(Instruction csinstr, AliasGraph graph) {
+		instrToGraph.put(csinstr, graph);
+		IdentityInstruction instr = (IdentityInstruction) csinstr;
+
+		AliasNode right = graph.lookupVar(instr.fromVar);
+		if (right == null) {
+			right = new AliasNode();
+			right.addVariable(instr.fromVar);
+			graph.addNode(right);
+		}
+		AliasNode left = graph.lookupVar(instr.toVar);
+		// from and to are already in the same node
+		if (left == right) {
+			return false;
+		}
+
 		graph.addVariableToNode(right, instr.toVar);
 
 		graph.gcNodes();

@@ -285,7 +285,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         flow.approvedTypeStatementsDiff -= variable
     }
 
-    override fun removeLogicStatementsAboutVariable(flow: PersistentFlow, variable: DataFlowVariable) {
+    override fun removeLogicStatementsAboutVariable(flow: PersistentFlow, variable: RealVariable) {
         flow.logicStatements -= variable
         var newLogicStatements = flow.logicStatements
         for ((key, implications) in flow.logicStatements) {
@@ -304,6 +304,8 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
             }
         }
         flow.logicStatements = newLogicStatements
+
+        flow.mustAnalysis.lastGraph?.removeVar(flow.mustAnalysis.lastGraph?.getRVATfromRV(variable))
     }
 
     override fun removeAliasInformationAboutVariable(flow: PersistentFlow, variable: RealVariable) {

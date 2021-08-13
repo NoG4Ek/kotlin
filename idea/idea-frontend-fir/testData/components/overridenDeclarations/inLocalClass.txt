@@ -1,4 +1,0 @@
-ALL:
-  foo.A.foo(): Unit
-DIRECT:
-  foo.A.foo(): Unit

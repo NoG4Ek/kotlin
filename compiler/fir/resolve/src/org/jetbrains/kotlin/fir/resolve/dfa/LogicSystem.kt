@@ -40,7 +40,7 @@ abstract class LogicSystem<FLOW : Flow>(protected val context: ConeInferenceCont
     abstract fun addImplication(flow: FLOW, implication: Implication)
 
     abstract fun removeTypeStatementsAboutVariable(flow: FLOW, variable: RealVariable)
-    abstract fun removeLogicStatementsAboutVariable(flow: FLOW, variable: DataFlowVariable)
+    abstract fun removeLogicStatementsAboutVariable(flow: FLOW, variable: RealVariable)
     abstract fun removeAliasInformationAboutVariable(flow: FLOW, variable: RealVariable)
 
     abstract fun translateVariableFromConditionInStatements(

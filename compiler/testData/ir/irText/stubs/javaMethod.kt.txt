@@ -1,4 +1,0 @@
-fun test(j: J) {
-  return j.bar()
-}
-

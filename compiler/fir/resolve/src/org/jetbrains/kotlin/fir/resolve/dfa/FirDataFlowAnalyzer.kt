@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolve.dfa.contracts.buildContractFir
 import org.jetbrains.kotlin.fir.resolve.dfa.contracts.createArgumentsMapping
+import org.jetbrains.kotlin.fir.resolve.dfa.input.IdentityInstruction
+import org.jetbrains.kotlin.fir.resolve.dfa.input.Instruction
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -42,6 +44,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import java.util.LinkedHashMap
 
 class DataFlowAnalyzerContext<FLOW : Flow>(
     val graphBuilder: ControlFlowGraphBuilder,
@@ -624,6 +627,40 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         if (rightOperandVariable.isReal()) {
             flow.addImplication((expressionVariable eq isEq) implies (rightOperandVariable typeEq leftOperandType))
             flow.addImplication((expressionVariable notEq isEq) implies (rightOperandVariable typeNotEq leftOperandType))
+        }
+
+        if (rightOperandVariable.isReal() && leftOperandVariable.isReal()) {
+
+            variableStorage.getOrCreateRealVariable(flow, leftOperand.symbol, leftOperand)
+                ?.let { leftVar ->
+                    val isLeftStable = leftVar.stability == PropertyStability.STABLE_VALUE ||
+                            (leftVar.stability == PropertyStability.LOCAL_VAR &&
+                                    leftOperand is FirQualifiedAccessExpression &&
+                                    !isAccessToUnstableLocalVariable(leftOperand))
+
+                    variableStorage.getOrCreateRealVariable(flow, rightOperand.symbol, rightOperand)
+                        ?.let { rightVar ->
+                            val isRightStable = rightVar.stability == PropertyStability.STABLE_VALUE ||
+                                    (rightVar.stability == PropertyStability.LOCAL_VAR &&
+                                            rightOperand is FirQualifiedAccessExpression &&
+                                            !isAccessToUnstableLocalVariable(rightOperand))
+
+                            if (isLeftStable && isRightStable) {
+                                if (isEq) {
+                                    flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(leftVar, RealVariableAndType(leftVar, leftOperandType))
+                                    flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(rightVar, RealVariableAndType(rightVar, rightOperandType))
+                                    val ii = IdentityInstruction(
+                                        flow.mustAnalysis.newId.toString(),
+                                        flow.mustAnalysis.lastGraph.getRVATfromRV(leftVar),
+                                        flow.mustAnalysis.lastGraph.getRVATfromRV(rightVar)
+                                    )
+                                    val toPrev: LinkedHashMap<Instruction, Set<Instruction>> = linkedMapOf(Pair(ii, setOf(ii)))
+
+                                    flow.mustAnalysis.instrToFixpoint(toPrev, toPrev)
+                                }
+                            }
+                        }
+                }
         }
 
         node.flow = flow

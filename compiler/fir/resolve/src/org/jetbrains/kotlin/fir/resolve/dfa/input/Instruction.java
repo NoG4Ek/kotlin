@@ -7,7 +7,8 @@ public abstract class Instruction implements Comparable<Instruction> {
 	// instanceof or double dispatching (a la Visitor pattern).
 	public enum Kind {
 		MOVE,
-		PHI
+		PHI,
+		IDENTITY
 	}
 
 	public final Kind kind;
