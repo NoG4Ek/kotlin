@@ -1,0 +1,17 @@
+OUT:
+Buildfile: [TestData]/build.xml
+
+build:
+  [kotlinc] Compiling [[TestData]/main.kt] => [[Temp]/hello.jar]
+  [kotlinc] [TestData]/main.kt:1:18: error: the feature "definitely not null type parameters" is only available since language version 1.6
+  [kotlinc] fun <T> f(t: T): T!! = t!!
+  [kotlinc]                  ^
+
+ERR:
+
+BUILD FAILED
+[TestData]/build.xml:5: Compile failed; see the compiler error output for details.
+
+Total time: [time]
+
+Return code: 1

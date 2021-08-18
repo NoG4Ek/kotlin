@@ -16,14 +16,18 @@ public class MustAnalysis {
 	public MustAnalysis() {
 		reachableInstr = new TreeSet<>();
 		instrToGraph = new HashMap<>();
-
-		Set<MustAnalysis> start = new HashSet<>();
-		start.add(this);
-		Instruction startI = new PhiInstruction("-1", start);
-		instrToGraph.put(startI, new AliasGraph());
-		lastInstr = startI;
-
 		idCounter = 0;
+
+		initMustAnalysis();
+	}
+
+	//Using to make linking of RVtoRVAT is possible
+	private void initMustAnalysis() {
+		Set<MustAnalysis> toInitInstruction = new HashSet<>();
+		toInitInstruction.add(this);
+		Instruction initInstruction = new PhiInstruction("-1", toInitInstruction);
+		instrToGraph.put(initInstruction, new AliasGraph());
+		lastInstr = initInstruction;
 	}
 
 	public void instrToFixpoint(LinkedHashMap<Instruction, Set<Instruction>> instrToPrev, LinkedHashMap<Instruction, Set<Instruction>> instrToNext) {
@@ -151,15 +155,13 @@ public class MustAnalysis {
 				return handleIdentityInstruction(csinstr, graph);
 			case PHI:
 				return handlePhiInstruction(csinstr, graph);
-
 			default:
-				System.out.println("!!!!!!!!!!!!!!!!!!!!");
-				assert false;
+				//add info message
 				return false;
 		}
 	}
 
-	boolean handleMoveInstruction(Instruction csinstr, AliasGraph graph) {
+	private boolean handleMoveInstruction(Instruction csinstr, AliasGraph graph) {
 		instrToGraph.put(csinstr, graph);
 		MoveInstruction instr = (MoveInstruction) csinstr;
 
@@ -184,7 +186,7 @@ public class MustAnalysis {
 		return true;
 	}
 
-	boolean handleIdentityInstruction(Instruction csinstr, AliasGraph graph) {
+	private boolean handleIdentityInstruction(Instruction csinstr, AliasGraph graph) {
 		instrToGraph.put(csinstr, graph);
 		IdentityInstruction instr = (IdentityInstruction) csinstr;
 
@@ -206,7 +208,7 @@ public class MustAnalysis {
 		return true;
 	}
 
-	boolean handlePhiInstruction(Instruction i, AliasGraph graph) {
+	private boolean handlePhiInstruction(Instruction i, AliasGraph graph) {
 		instrToGraph.put(i, graph);
 		PhiInstruction instr = (PhiInstruction) i;
 
@@ -232,27 +234,13 @@ public class MustAnalysis {
 		return true;
 	}
 
-	Set<String> expandVars(Set<String> vars) {
-		Set<String> result = new HashSet<>();
-		for (String var : vars) {
-			String temp = var;
-			result.add(temp);
-			while (temp.startsWith("[")) {
-				temp = temp.substring(1, temp.length() -1);
-				result.add(temp);
-			}
-			result.add(temp);
-		}
-		return result;
-	}
-
-	@Override
-	public String toString() {
-		String graphs = "";
-		for (Instruction instruction: reachableInstr) {
-			graphs += instruction + ":\n";
-			graphs += instrToGraph.get(instruction).toString();
-		}
-		return graphs;
-	}
+	//@Override
+	//public String toString() {
+	//	String graphs = "";
+	//	for (Instruction instruction: reachableInstr) {
+	//		graphs += instruction + ":\n";
+	//		graphs += instrToGraph.get(instruction).toString();
+	//	}
+	//	return graphs;
+	//}
 }

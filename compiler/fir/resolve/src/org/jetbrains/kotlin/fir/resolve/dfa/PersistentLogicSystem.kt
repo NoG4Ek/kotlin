@@ -218,6 +218,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         )
 
         flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(alias, RealVariableAndType(alias, underlyingVariable.originalType))
+        flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(underlyingVariable.variable, underlyingVariable)
         val mi = MoveInstruction(
             flow.mustAnalysis.newId.toString(),
             flow.mustAnalysis.lastGraph.getRVATfromRV(alias),
@@ -304,8 +305,6 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
             }
         }
         flow.logicStatements = newLogicStatements
-
-        flow.mustAnalysis.lastGraph?.removeVar(flow.mustAnalysis.lastGraph?.getRVATfromRV(variable))
     }
 
     override fun removeAliasInformationAboutVariable(flow: PersistentFlow, variable: RealVariable) {
