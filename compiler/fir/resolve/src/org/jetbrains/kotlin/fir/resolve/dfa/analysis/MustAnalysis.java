@@ -5,8 +5,8 @@ import java.util.*;
 import org.jetbrains.kotlin.fir.resolve.dfa.input.*;
 
 public class MustAnalysis {
-	private final Set<Instruction> 				reachableInstr;
-	private final Map<Instruction, AliasGraph> 	instrToGraph;
+	private Set<Instruction> 				reachableInstr;
+	private Map<Instruction, AliasGraph> 	instrToGraph;
 	private int 								idCounter;
 	private Instruction 						lastInstr;
 
@@ -19,6 +19,20 @@ public class MustAnalysis {
 		idCounter = 0;
 
 		initMustAnalysis();
+	}
+
+	public MustAnalysis(MustAnalysis ma) {
+		this();
+
+		idCounter = ma.idCounter;
+		int ch = 0;
+		for (Instruction instr: ma.instrToGraph.keySet()) {
+			ch++;
+			instrToGraph.put(instr, ma.instrToGraph.get(instr));
+			if (ch == ma.instrToGraph.keySet().size()) {
+				lastInstr = instr;
+			}
+		}
 	}
 
 	//Using to make linking of RVtoRVAT is possible

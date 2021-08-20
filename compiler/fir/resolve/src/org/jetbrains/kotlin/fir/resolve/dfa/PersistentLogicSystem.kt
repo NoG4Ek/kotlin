@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.resolve.dfa
 import com.google.common.collect.ArrayListMultimap
 import kotlinx.collections.immutable.*
 import org.jetbrains.kotlin.fir.resolve.dfa.analysis.MustAnalysis
+import org.jetbrains.kotlin.fir.resolve.dfa.input.IdentityInstruction
 import org.jetbrains.kotlin.fir.resolve.dfa.input.Instruction
 import org.jetbrains.kotlin.fir.resolve.dfa.input.MoveInstruction
 import org.jetbrains.kotlin.fir.resolve.dfa.input.PhiInstruction
@@ -67,7 +68,7 @@ class PersistentFlow : Flow {
         logicStatements = previousFlow.logicStatements
         level = previousFlow.level + 1
 
-        mustAnalysis = previousFlow.mustAnalysis
+        mustAnalysis = MustAnalysis(previousFlow.mustAnalysis)
         directAliasMap = previousFlow.directAliasMap
         backwardsAliasMap = previousFlow.backwardsAliasMap
         assignmentIndex = previousFlow.assignmentIndex
@@ -349,14 +350,15 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         shouldForkFlow: Boolean,
         shouldRemoveSynthetics: Boolean
     ): PersistentFlow {
+        val resultFlow = if (shouldForkFlow) forkFlow(flow) else flow
+
         val approvedFacts = approveOperationStatementsInternal(
-            flow,
+            resultFlow,
             approvedStatement,
             initialStatements = null,
             shouldRemoveSynthetics
         )
 
-        val resultFlow = if (shouldForkFlow) forkFlow(flow) else flow
         if (approvedFacts.isEmpty) return resultFlow
 
         val updatedReceivers = mutableSetOf<RealVariable>()
@@ -411,13 +413,29 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
                 ?: flow.logicStatements[approvedStatement.variable]?.takeIf { it.isNotEmpty() }
                 ?: continue
             if (shouldRemoveSynthetics && approvedStatement.variable.isSynthetic()) {
-                flow.logicStatements -= approvedStatement.variable
+                flow.previousFlow?.logicStatements = flow.previousFlow?.logicStatements?.minus(approvedStatement.variable)!!
             }
             for (statement in statements) {
                 if (statement.condition == approvedStatement) {
                     when (val effect = statement.effect) {
                         is OperationStatement -> approvedStatements += effect
                         is TypeStatement -> approvedTypeStatements.put(effect.variable, effect)
+                        is IdentityStatement -> if (effect.isIdentity) {
+                            flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(effect.fromRealVariable.variable, effect.fromRealVariable)
+                            flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(effect.toRealVariable.variable, effect.toRealVariable)
+                            val ii = IdentityInstruction(
+                                flow.mustAnalysis.newId.toString(),
+                                effect.fromRealVariable,
+                                effect.toRealVariable
+                            )
+                            val toPrev: LinkedHashMap<Instruction, Set<Instruction>> = linkedMapOf(Pair(ii, setOf(ii)))
+
+                            flow.mustAnalysis.instrToFixpoint(toPrev, toPrev)
+                        } else {
+                            flow.mustAnalysis.lastGraph.removeVar(effect.fromRealVariable)
+                            flow.mustAnalysis.lastGraph.removeVar(effect.toRealVariable)
+                            flow.mustAnalysis.lastGraph.gcNodes()
+                        }
                     }
                 }
             }

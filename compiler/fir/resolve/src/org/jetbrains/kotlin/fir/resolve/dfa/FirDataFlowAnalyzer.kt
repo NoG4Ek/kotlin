@@ -646,18 +646,16 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                                             !isAccessToUnstableLocalVariable(rightOperand))
 
                             if (isLeftStable && isRightStable) {
-                                if (isEq) {
-                                    flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(leftVar, RealVariableAndType(leftVar, leftOperandType))
-                                    flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(rightVar, RealVariableAndType(rightVar, rightOperandType))
-                                    val ii = IdentityInstruction(
-                                        flow.mustAnalysis.newId.toString(),
-                                        flow.mustAnalysis.lastGraph.getRVATfromRV(leftVar),
-                                        flow.mustAnalysis.lastGraph.getRVATfromRV(rightVar)
-                                    )
-                                    val toPrev: LinkedHashMap<Instruction, Set<Instruction>> = linkedMapOf(Pair(ii, setOf(ii)))
-
-                                    flow.mustAnalysis.instrToFixpoint(toPrev, toPrev)
-                                }
+                                val rvatL = RealVariableAndType(leftVar, leftOperandType)
+                                val rvatR = RealVariableAndType(rightVar, rightOperandType)
+                                flow.addImplication(
+                                    (expressionVariable eq isEq) implies
+                                            IdentityStatement(leftOperandVariable, rvatL, rvatR, true)
+                                )
+                                flow.addImplication(
+                                    (expressionVariable notEq isEq) implies
+                                            IdentityStatement(rightOperandVariable, rvatR, rvatL, false)
+                                )
                             }
                         }
                 }

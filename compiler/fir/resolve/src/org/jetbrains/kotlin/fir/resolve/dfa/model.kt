@@ -133,6 +133,22 @@ sealed class Statement<T : Statement<T>> {
     abstract val variable: DataFlowVariable
 }
 
+data class IdentityStatement(
+    override val variable: DataFlowVariable,
+    val fromRealVariable: RealVariableAndType,
+    val toRealVariable: RealVariableAndType,
+    val isIdentity: Boolean
+) :
+    Statement<IdentityStatement>() {
+    override fun invert(): IdentityStatement {
+        return IdentityStatement(variable, fromRealVariable, toRealVariable, !isIdentity)
+    }
+
+    override fun toString(): String {
+        return "$fromRealVariable to $toRealVariable identity is $isIdentity"
+    }
+}
+
 /*
  * Examples:
  * d == Null
