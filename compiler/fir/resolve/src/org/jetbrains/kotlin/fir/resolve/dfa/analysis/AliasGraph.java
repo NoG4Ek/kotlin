@@ -197,7 +197,7 @@ public class AliasGraph {
 	//  -are empty (contain no vars) and have zero in-edges
     //  -are empty (contain no vars) have one in-edge and zero out-edges
 	public void gcNodes() {
-		assert sanityVariables();
+		//assert sanityVariables();
 		assert sanityEdges2way();
 		boolean changed;
 		do {
@@ -450,11 +450,11 @@ public class AliasGraph {
 	public String toString() {
 		if (_nodes.isEmpty()) return "{}";
 
-		String nodes = "";
+		StringBuilder nodes = new StringBuilder();
 		for (AliasNode node: _nodes) {
-			nodes += node.toString();
+			nodes.append("{").append(node.toString()).append("}");
 		}
-		return nodes;
+		return nodes.toString();
 	}
 
 //	public String getGraphMustAliasPairs(String instruction) {

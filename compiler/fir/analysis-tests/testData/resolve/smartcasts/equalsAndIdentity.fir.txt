@@ -57,3 +57,24 @@ FILE: equalsAndIdentity.kt
         }
 
     }
+    public final fun test_4(x: R|kotlin/Any?|, y: R|kotlin/Any?|): R|kotlin/Unit| {
+        when () {
+            ==(R|<local>/y|, Null(null)) ->  {
+                ^test_4 Unit
+            }
+        }
+
+        when () {
+            !==(R|<local>/x|, R|<local>/y|) ->  {
+            }
+            else ->  {
+                when () {
+                    (R|<local>/x| is R|kotlin/String|) ->  {
+                        R|<local>/y|.R|kotlin/String.length|
+                    }
+                }
+
+            }
+        }
+
+    }

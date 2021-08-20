@@ -653,6 +653,14 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                                             IdentityStatement(leftOperandVariable, rvatL, rvatR, true)
                                 )
                                 flow.addImplication(
+                                    (expressionVariable eq isEq) implies
+                                            IdentityStatement(rightOperandVariable, rvatR, rvatL, true)
+                                )
+                                flow.addImplication(
+                                    (expressionVariable notEq isEq) implies
+                                            IdentityStatement(leftOperandVariable, rvatL, rvatR, false)
+                                )
+                                flow.addImplication(
                                     (expressionVariable notEq isEq) implies
                                             IdentityStatement(rightOperandVariable, rvatR, rvatL, false)
                                 )

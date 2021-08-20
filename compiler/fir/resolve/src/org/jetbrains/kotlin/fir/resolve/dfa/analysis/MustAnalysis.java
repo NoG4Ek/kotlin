@@ -5,34 +5,15 @@ import java.util.*;
 import org.jetbrains.kotlin.fir.resolve.dfa.input.*;
 
 public class MustAnalysis {
-	private Set<Instruction> 				reachableInstr;
 	private Map<Instruction, AliasGraph> 	instrToGraph;
 	private int 								idCounter;
 	private Instruction 						lastInstr;
 
-	private LinkedHashMap<Instruction, Set<Instruction>> instrToPrev;
-	private LinkedHashMap<Instruction, Set<Instruction>> instrToNext;
-
 	public MustAnalysis() {
-		reachableInstr = new TreeSet<>();
 		instrToGraph = new HashMap<>();
 		idCounter = 0;
 
 		initMustAnalysis();
-	}
-
-	public MustAnalysis(MustAnalysis ma) {
-		this();
-
-		idCounter = ma.idCounter;
-		int ch = 0;
-		for (Instruction instr: ma.instrToGraph.keySet()) {
-			ch++;
-			instrToGraph.put(instr, ma.instrToGraph.get(instr));
-			if (ch == ma.instrToGraph.keySet().size()) {
-				lastInstr = instr;
-			}
-		}
 	}
 
 	//Using to make linking of RVtoRVAT is possible
@@ -44,22 +25,16 @@ public class MustAnalysis {
 		lastInstr = initInstruction;
 	}
 
-	public void instrToFixpoint(LinkedHashMap<Instruction, Set<Instruction>> instrToPrev, LinkedHashMap<Instruction, Set<Instruction>> instrToNext) {
-		this.instrToPrev = instrToPrev;
-		this.instrToNext = instrToNext;
+	public MustAnalysis(MustAnalysis ma) {
+		this();
 
-		for (Instruction csinstr : instrToPrev.keySet()) {
-			reachableInstr.add(csinstr);
-			instrToGraph.put(csinstr, new AliasGraph());
+		idCounter = ma.idCounter;
+		int ch = 0;
+		for (Instruction instr: ma.instrToGraph.keySet()) {
+			ch++;
+			instrToGraph.put(instr, ma.instrToGraph.get(instr));
 		}
-		applyToFixpoint();
-		clear();
-	}
-
-	private void clear() {
-		reachableInstr.clear();
-		instrToPrev.clear();
-		instrToNext.clear();
+		lastInstr = ma.lastInstr;
 	}
 
 	public int getNewId() {
@@ -71,33 +46,45 @@ public class MustAnalysis {
 		return instrToGraph.get(lastInstr);
 	}
 
-	private Set<Instruction> _newlyReachable;
-	private Set<Instruction> _nextInstructions;
+	public void instrToFixpoint(LinkedHashMap<Instruction, Set<Instruction>> instrToPrev, LinkedHashMap<Instruction, Set<Instruction>> instrToNext) {
+		Set<Instruction> reachableInstr = new TreeSet<>();
+		for (Instruction instr : instrToPrev.keySet()) {
+			for (Instruction instr1: instrToPrev.get(instr)) {
+				reachableInstr.add(instr1);
+				instrToGraph.put(instr1, new AliasGraph());
+			}
+		}
+		for (Instruction instr : instrToNext.keySet()) {
+			for (Instruction instr1: instrToNext.get(instr)) {
+				reachableInstr.add(instr1);
+				instrToGraph.put(instr1, new AliasGraph());
+			}
+		}
+		applyToFixpoint(instrToPrev, instrToNext, reachableInstr);
+	}
 
 	// highly inefficient in many ways, and currently not really up to fixpoint
 	//  - replaces the old graphs every time, does not just add deltas
 	//  - does not optimize order of instructions to reach fixpoint
-	private void applyToFixpoint() {
+	private void applyToFixpoint(LinkedHashMap<Instruction, Set<Instruction>> instrToPrev, LinkedHashMap<Instruction, Set<Instruction>> instrToNext, Set<Instruction> reachableInstr) {
 		boolean remLastInstr = true;
 		Set<Instruction> instructionsToProcess = reachableInstr;
 
 		for (int loop = 0; !instructionsToProcess.isEmpty() ; loop++) {
 			Set<Instruction> deltaInstructions = new TreeSet<>();
-			_newlyReachable = new TreeSet<>();
 
-			for (Instruction csinstr : instructionsToProcess) {
-				if (csinstr == lastInstr) break;
-				Instruction instr = csinstr;
-				AliasGraph g = instrToGraph.get(csinstr);
+			for (Instruction instr : instructionsToProcess) {
+				if (instr == lastInstr) break;
+				AliasGraph g = instrToGraph.get(instr);
 				AliasGraph oldGraph = new AliasGraph(g);
-				_nextInstructions = new TreeSet<>();
+				Set<Instruction> _nextInstructions = new TreeSet<>();
 
-					Set<Instruction> predecessors = instrToPrev.get(csinstr);
+					Set<Instruction> predecessors = instrToPrev.get(instr);
 					if (predecessors != null) {
 						if (predecessors.size() == 1) {
 							Iterator<Instruction> curAncestor = predecessors.iterator();
 							Instruction ancestor = curAncestor.next();
-							if (csinstr == ancestor) {
+							if (instr == ancestor) {
 								if (!lastInstr.id.equals("-1") && remLastInstr) {
 									remLastInstr = false;
 									AliasGraph predecessorGraph = instrToGraph.get(lastInstr);
@@ -128,32 +115,23 @@ public class MustAnalysis {
 						}
 					}
 
-				boolean hasChange = applyInstruction(csinstr, g);
-				//boolean areEqual = g.equals(oldGraph);
-				boolean origHasChange = hasChange;
-				//if (instr.kind != Instruction.Kind.RESOLVED_CALL && hasChange) {
-				//	hasChange = !areEqual;
-				//}
-				//else if (instr.kind == Instruction.Kind.RESOLVED_CALL) {
-				//	hasChange = true;
-				//}
+				boolean hasChange = applyInstruction(instr, g);
+
 				if (!hasChange) {
-				//else if (instr.kind != Instruction.Kind.RESOLVED_CALL) {
 					boolean areEqual = g.equals(oldGraph);
 					hasChange = !areEqual;
 				}
 
 				if (hasChange) {
-					Set<Instruction> nextSet = instrToNext.get(csinstr);
+					Set<Instruction> nextSet = instrToNext.get(instr);
 					if (nextSet != null)
 						_nextInstructions.addAll(nextSet);
 
 					deltaInstructions.addAll(_nextInstructions);
 				}
-				lastInstr = csinstr;
+				lastInstr = instr;
 			}
 			instructionsToProcess = deltaInstructions;
-			reachableInstr.addAll(_newlyReachable);
 		}
 
 		System.out.println("-- DONE --");
@@ -248,13 +226,13 @@ public class MustAnalysis {
 		return true;
 	}
 
-	//@Override
-	//public String toString() {
-	//	String graphs = "";
-	//	for (Instruction instruction: reachableInstr) {
-	//		graphs += instruction + ":\n";
-	//		graphs += instrToGraph.get(instruction).toString();
-	//	}
-	//	return graphs;
-	//}
+	@Override
+	public String toString() {
+		String graphs = "";
+		for (Instruction instruction: instrToGraph.keySet()) {
+			graphs += instruction + ":\n";
+			graphs += instrToGraph.get(instruction).toString();
+		}
+		return graphs;
+	}
 }

@@ -431,10 +431,6 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
                             val toPrev: LinkedHashMap<Instruction, Set<Instruction>> = linkedMapOf(Pair(ii, setOf(ii)))
 
                             flow.mustAnalysis.instrToFixpoint(toPrev, toPrev)
-                        } else {
-                            flow.mustAnalysis.lastGraph.removeVar(effect.fromRealVariable)
-                            flow.mustAnalysis.lastGraph.removeVar(effect.toRealVariable)
-                            flow.mustAnalysis.lastGraph.gcNodes()
                         }
                     }
                 }
