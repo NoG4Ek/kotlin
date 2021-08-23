@@ -235,8 +235,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         flow.directAliasMap = flow.directAliasMap.remove(alias)
         val variables = flow.backwardsAliasMap.getValue(original)
         flow.backwardsAliasMap = flow.backwardsAliasMap.put(original, variables - alias)
-
-        flow.mustAnalysis.lastGraph?.removeVar(flow.mustAnalysis.lastGraph?.getRVATfromRV(alias))
+        flow.mustAnalysis.lastGraph?.getRVATfromRV(alias)?.let { flow.mustAnalysis.lastGraph?.removeVar(it) }
     }
 
     @OptIn(DfaInternals::class)
@@ -320,7 +319,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
             }
         }
 
-        flow.mustAnalysis.lastGraph?.removeVar(flow.mustAnalysis.lastGraph?.getRVATfromRV(variable))
+        flow.mustAnalysis.lastGraph?.getRVATfromRV(variable)?.let { flow.mustAnalysis.lastGraph?.removeVar(it) }
     }
 
     override fun translateVariableFromConditionInStatements(

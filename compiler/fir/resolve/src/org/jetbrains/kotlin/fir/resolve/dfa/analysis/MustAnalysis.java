@@ -134,7 +134,7 @@ public class MustAnalysis {
 			instructionsToProcess = deltaInstructions;
 		}
 
-		System.out.println("-- DONE --");
+			System.out.println("-- DONE --");
 	}
 
 	// Apply instruction semantics on the graph right before the instruction
