@@ -91,23 +91,3 @@ FILE: boundSmartcasts.kt
         (R|<local>/b| as R|B|)
         R|<local>/b|.R|/B.bar|()
     }
-    public final fun test_8(): R|kotlin/Unit| {
-        lval y: R|kotlin/Any| = R|kotlin/Any.Any|()
-        lval x: R|kotlin/Any| = R|<local>/y|
-        when () {
-            (R|<local>/y| is R|kotlin/String|) ->  {
-                R|<local>/x|.R|kotlin/String.length|
-            }
-        }
-
-    }
-    public final fun test_9(): R|kotlin/Unit| {
-        lval y: R|kotlin/Any| = R|kotlin/Any.Any|()
-        lval x: R|kotlin/Any| = R|<local>/y|
-        when () {
-            (R|<local>/x| is R|kotlin/String|) ->  {
-                R|<local>/y|.R|kotlin/String.length|
-            }
-        }
-
-    }

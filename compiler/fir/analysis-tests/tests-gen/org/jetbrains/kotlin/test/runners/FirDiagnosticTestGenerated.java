@@ -3565,6 +3565,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("testAliasGraph.kt")
+                public void testAliasGraph() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/boundSmartcasts/testAliasGraph.kt");
+                }
+
+                @Test
                 @TestMetadata("boundSmartcasts.kt")
                 public void testBoundSmartcasts() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/boundSmartcasts/boundSmartcasts.kt");

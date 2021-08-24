@@ -218,11 +218,11 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
             { variables -> variables + alias }
         )
 
-        flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(alias, RealVariableAndType(alias, underlyingVariable.originalType))
-        flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(underlyingVariable.variable, underlyingVariable)
+        flow.mustAnalysis.lastGraph?.addLinkRVtoRVAT(alias, RealVariableAndType(alias, underlyingVariable.originalType))
+        flow.mustAnalysis.lastGraph?.addLinkRVtoRVAT(underlyingVariable.variable, underlyingVariable)
         val mi = MoveInstruction(
             flow.mustAnalysis.newId.toString(),
-            flow.mustAnalysis.lastGraph.getRVATfromRV(alias),
+            flow.mustAnalysis.lastGraph?.getRVATfromRV(alias)!!,
             underlyingVariable
         )
         val toPrev: LinkedHashMap<Instruction, Set<Instruction>> = linkedMapOf(Pair(mi, setOf(mi)))
@@ -420,8 +420,8 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
                         is OperationStatement -> approvedStatements += effect
                         is TypeStatement -> approvedTypeStatements.put(effect.variable, effect)
                         is IdentityStatement -> if (effect.isIdentity) {
-                            flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(effect.fromRealVariable.variable, effect.fromRealVariable)
-                            flow.mustAnalysis.lastGraph.addLinkRVtoRVAT(effect.toRealVariable.variable, effect.toRealVariable)
+                            flow.mustAnalysis.lastGraph?.addLinkRVtoRVAT(effect.fromRealVariable.variable, effect.fromRealVariable)
+                            flow.mustAnalysis.lastGraph?.addLinkRVtoRVAT(effect.toRealVariable.variable, effect.toRealVariable)
                             val ii = IdentityInstruction(
                                 flow.mustAnalysis.newId.toString(),
                                 effect.fromRealVariable,

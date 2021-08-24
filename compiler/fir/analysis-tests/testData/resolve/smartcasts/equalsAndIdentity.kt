@@ -36,13 +36,3 @@ fun test_3(x: A?, y: A?) {
         y.foo()
     }
 }
-
-fun test_4(x: Any?, y: Any?) {
-    if (y == null) return
-    if (x !== y) {}
-    else {
-        if (x is String) {
-            y.length
-        }
-    }
-}

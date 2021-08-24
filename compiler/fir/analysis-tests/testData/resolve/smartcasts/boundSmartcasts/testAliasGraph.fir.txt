@@ -1,0 +1,204 @@
+FILE: testAliasGraph.kt
+    public abstract interface A : R|kotlin/Any| {
+        public abstract fun foo(): R|kotlin/Unit|
+
+    }
+    public abstract interface B : R|kotlin/Any| {
+        public abstract fun bar(): R|kotlin/Unit|
+
+    }
+    public final fun test_1(x: R|kotlin/Any|): R|kotlin/Unit| {
+        lval y: R|kotlin/Any| = R|<local>/x|
+        lval z: R|kotlin/Any| = R|<local>/y|
+        lval c: R|kotlin/Any| = R|<local>/z|
+        lval o: R|kotlin/Any| = R|kotlin/Any.Any|()
+        lval p: R|kotlin/Any| = R|<local>/o|
+        lval s: R|kotlin/String| = R|kotlin/String.String|()
+        when () {
+            (R|<local>/x| is R|A|) ->  {
+                R|<local>/x|.R|/A.foo|()
+                R|<local>/y|.R|/A.foo|()
+                R|<local>/c|.R|/A.foo|()
+                R|<local>/p|.<Unresolved name: foo>#()
+            }
+            else ->  {
+                when () {
+                    (R|<local>/o| is R|A|) ->  {
+                        R|<local>/x|.<Unresolved name: foo>#()
+                        R|<local>/p|.R|/A.foo|()
+                    }
+                }
+
+                when () {
+                    !==(R|<local>/p|, R|<local>/s|) ->  {
+                    }
+                    else ->  {
+                        R|<local>/o|.R|kotlin/String.length|
+                    }
+                }
+
+            }
+        }
+
+    }
+    public final fun test_2(a: R|kotlin/Any|): R|kotlin/Unit| {
+        lval x: R|kotlin/Boolean| = Boolean(false)
+        lval b: R|kotlin/IntArray| = R|kotlin/IntArray.IntArray|(Int(1))
+        when () {
+            ===(R|<local>/a|, R|<local>/x|) ->  {
+                R|<local>/a|.R|kotlin/Boolean.or|(Boolean(true))
+            }
+        }
+
+        when () {
+            ===(R|<local>/a|, R|<local>/b|) ->  {
+                R|<local>/a|.R|kotlin/IntArray.iterator|()
+            }
+        }
+
+    }
+    public final fun test_3(): R|kotlin/Unit| {
+        lval y: R|kotlin/Any| = R|kotlin/Any.Any|()
+        lval x: R|kotlin/Any| = R|<local>/y|
+        when () {
+            (R|<local>/y| is R|kotlin/String|) ->  {
+                R|<local>/x|.R|kotlin/String.length|
+            }
+        }
+
+    }
+    public final fun test_4(): R|kotlin/Unit| {
+        lval y: R|kotlin/Any| = R|kotlin/Any.Any|()
+        lval x: R|kotlin/Any| = R|<local>/y|
+        when () {
+            (R|<local>/x| is R|kotlin/String|) ->  {
+                R|<local>/y|.R|kotlin/String.length|
+            }
+        }
+
+    }
+    public final fun test_5(x: R|kotlin/Any|, y: R|kotlin/Any|): R|kotlin/Unit| {
+        lval z: R|kotlin/Any|
+        when () {
+            Boolean(true) ->  {
+                R|<local>/z| = R|<local>/x|
+            }
+            else ->  {
+                R|<local>/z| = R|<local>/x|
+            }
+        }
+
+        when () {
+            (R|<local>/x| is R|B|) ->  {
+                R|<local>/z|.<Unresolved name: foo>#()
+                R|<local>/z|.R|/B.bar|()
+            }
+        }
+
+    }
+    public final fun test_6(x: R|A?|, y: R|A?|): R|kotlin/Unit| {
+        when () {
+            ==(R|<local>/y|, Null(null)) ->  {
+                ^test_6 Unit
+            }
+        }
+
+        when () {
+            ==(R|<local>/x|, R|<local>/y|) ->  {
+                R|<local>/x|.R|/A.foo|()
+                R|<local>/y|.R|/A.foo|()
+            }
+        }
+
+        when () {
+            !==(R|<local>/x|, R|<local>/y|) ->  {
+            }
+            else ->  {
+                R|<local>/x|.R|/A.foo|()
+                R|<local>/y|.R|/A.foo|()
+            }
+        }
+
+    }
+    public final fun test_7(x: R|kotlin/Any?|, y: R|kotlin/Any?|): R|kotlin/Unit| {
+        when () {
+            ==(R|<local>/y|, Null(null)) ->  {
+                ^test_7 Unit
+            }
+        }
+
+        when () {
+            !==(R|<local>/x|, R|<local>/y|) ->  {
+            }
+            else ->  {
+                when () {
+                    (R|<local>/x| is R|kotlin/String|) ->  {
+                        R|<local>/y|.R|kotlin/String.length|
+                    }
+                }
+
+            }
+        }
+
+    }
+    public open class M : R|kotlin/Any| {
+        public constructor(any: R|kotlin/Any?|): R|M| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val any: R|kotlin/Any?| = R|<local>/any|
+            public get(): R|kotlin/Any?|
+
+    }
+    public final class MM : R|M| {
+        public constructor(a: R|kotlin/Any?|): R|MM| {
+            super<R|M|>(R|<local>/a|)
+        }
+
+        public final val a: R|kotlin/Any?| = R|<local>/a|
+            public get(): R|kotlin/Any?|
+
+        public final fun mf(): R|kotlin/Unit| {
+        }
+
+    }
+    public final fun R|kotlin/Any|.baz(): R|kotlin/Unit| {
+    }
+    public final fun test_8(m1: R|M|): R|kotlin/Unit| {
+        lval m2: R|MM| = R|/MM.MM|(Int(1))
+        lval a: R|kotlin/Any?| = R|<local>/m1|.R|/M.any|
+        (R|<local>/a| as R|A|)
+        R|<local>/a|.R|/A.foo|()
+        R|<local>/m1|.R|/M.any|.R|/A.foo|()
+        R|<local>/m1|.R|/M.any|.R|/baz|()
+        when () {
+            (R|<local>/m1| is R|MM|) ->  {
+                R|<local>/m1|.R|/MM.mf|()
+            }
+        }
+
+        when () {
+            ===(R|<local>/m1|, R|<local>/m2|) ->  {
+                R|<local>/m1|.R|/MM.mf|()
+            }
+        }
+
+    }
+    public final fun inte(): R|kotlin/Int| {
+        ^inte Int(12)
+    }
+    public final fun test_9(x: R|kotlin/Any|): R|kotlin/Unit| {
+        lval i: R|kotlin/Int| = R|/inte|()
+        when () {
+            (R|<local>/x| is R|kotlin/String|) ->  {
+                R|<local>/x|.R|kotlin/String.length|
+            }
+        }
+
+        when () {
+            ===(R|<local>/x|, R|<local>/i|) ->  {
+                R|<local>/x|.R|kotlin/Int.inc|()
+            }
+        }
+
+    }

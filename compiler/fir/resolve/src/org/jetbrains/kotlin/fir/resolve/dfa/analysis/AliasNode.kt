@@ -17,8 +17,6 @@ class AliasNode {
         get() = labelToNode
     val inEdgeMap: Map<RealVariableAndType, AliasNode>
         get() = labelFromNode
-    val isEmpty: Boolean
-        get() = vars.isEmpty()
 
     fun addVariable(variable: RealVariableAndType) {
         vars.add(variable)

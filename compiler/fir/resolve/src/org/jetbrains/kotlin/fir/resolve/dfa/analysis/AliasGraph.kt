@@ -4,23 +4,22 @@ import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
 import org.jetbrains.kotlin.fir.resolve.dfa.RealVariableAndType
 import org.jetbrains.kotlin.fir.resolve.dfa.analysis.AliasNode.Companion.cloneVarsOnly
 import org.jetbrains.kotlin.fir.resolve.dfa.analysis.AliasNode.Companion.intersectVars
-import org.jetbrains.kotlin.fir.resolve.dfa.utils.Pair
-import java.io.BufferedWriter
-import java.io.IOException
 
 class AliasGraph() {
-    var _nodes: MutableSet<AliasNode> = HashSet()
-    var _varToNode: MutableMap<RealVariableAndType, AliasNode> = HashMap()
-    var linkToRVAT: MutableMap<RealVariable, RealVariableAndType> = HashMap()
+    private val nodesSet: MutableSet<AliasNode> = HashSet()
+    private val varToNode: MutableMap<RealVariableAndType, AliasNode> = HashMap()
+    private val linkToRVAT: MutableMap<RealVariable, RealVariableAndType> = HashMap()
+    val nodes: Set<AliasNode>
+        get() = nodesSet
 
     constructor(orig: AliasGraph) : this() {
-        linkToRVAT = orig.linkToRVAT
+        linkToRVAT.putAll(orig.linkToRVAT)
 
         val origToNewNode: MutableMap<AliasNode, AliasNode> = HashMap()
-        for (origNode in orig._nodes) {
+        for (origNode in orig.nodesSet) {
             origToNewNode[origNode] = cloneVarsOnly(origNode)
         }
-        for (origNode in orig._nodes) {
+        for (origNode in orig.nodesSet) {
             val newNode = origToNewNode[origNode]!!
             addNode(newNode)
             for ((key, value) in origNode.outEdgeMap) {
@@ -29,37 +28,35 @@ class AliasGraph() {
         }
     }
 
-
-
     fun union(other: AliasGraph) {
-        val thisC = AliasGraph(this)
-        val fromOtherToThis: MutableMap<AliasNode?, AliasNode?> = HashMap()
-        for (otherNode in other._nodes) {
+        AliasGraph(this)
+        val fromOtherToThis: MutableMap<AliasNode, AliasNode> = HashMap()
+        for (otherNode in other.nodesSet) {
             var thisNode: AliasNode? = null
             for (`var` in otherNode.variables) {
-                val temp = _varToNode[`var`]
+                val temp = varToNode[`var`]
                 // var exists in "this" graph
                 if (temp != null) {
                     // The two graphs have conflicts! Should not happen
                     if (thisNode != null && thisNode != temp) {
-                        println("WRONG!!!!!!!!!!!!!!!!!!!!!!")
-                        println("$other -- $thisC")
                         throw RuntimeException()
                     }
                     thisNode = temp
                 }
             }
-            fromOtherToThis[otherNode] = thisNode
+            if (thisNode != null) {
+                fromOtherToThis[otherNode] = thisNode
+            }
         }
-        for (otherNode in other._nodes) {
+        for (otherNode in other.nodesSet) {
             var thisNode = fromOtherToThis[otherNode]
             if (thisNode == null) {
                 thisNode = AliasNode()
-                _nodes.add(thisNode)
+                nodesSet.add(thisNode)
                 fromOtherToThis[otherNode] = thisNode
             }
             for (`var` in otherNode.variables) {
-                val temp = _varToNode[`var`]
+                val temp = varToNode[`var`]
                 // var doesn't exist in "this" graph
                 // should appear in "thisNode"
                 if (temp == null) {
@@ -67,7 +64,7 @@ class AliasGraph() {
                 }
             }
         }
-        for (otherNode in other._nodes) {
+        for (otherNode in other.nodesSet) {
             val thisNode = fromOtherToThis[otherNode]
             for (label in otherNode.outEdgeMap.keys) {
                 val otherTarget = otherNode.outEdgeMap[label]
@@ -79,12 +76,12 @@ class AliasGraph() {
 
     override fun equals(other: Any?): Boolean {
         if (other !is AliasGraph) return false
-        if (_nodes.size != other._nodes.size) return false
+        if (nodesSet.size != other.nodesSet.size) return false
         val fromThisToOther: MutableMap<AliasNode?, AliasNode> = HashMap()
-        for (node in _nodes) {
+        for (node in nodesSet) {
             var otherNode: AliasNode? = null
             for (`var` in node.variables) {
-                val temp = other._varToNode[`var`]
+                val temp = other.varToNode[`var`]
                 // for the first iteration
                 if (otherNode == null) otherNode = temp
                 if (otherNode != temp) return false
@@ -92,7 +89,7 @@ class AliasGraph() {
             if (otherNode == null || node.variables.size != otherNode.variables.size || node.outEdgeMap.size != otherNode.outEdgeMap.size || node.inEdgeMap.size != otherNode.inEdgeMap.size) return false
             fromThisToOther[node] = otherNode
         }
-        for (node in _nodes) {
+        for (node in nodesSet) {
             val otherNode = fromThisToOther[node]
             for (label in node.outEdgeMap.keys) {
                 val target = node.outEdgeMap[label]
@@ -118,17 +115,17 @@ class AliasGraph() {
     }
 
     fun addNode(node: AliasNode) {
-        _nodes.add(node)
+        nodesSet.add(node)
         for (`var` in node.variables) {
-            _varToNode[`var`] = node
+            varToNode[`var`] = node
         }
     }
 
     // remove node, and all edges associated with it
     fun removeNode(node: AliasNode) {
-        _nodes.remove(node)
+        nodesSet.remove(node)
         for (`var` in node.variables) {
-            _varToNode.remove(`var`)
+            varToNode.remove(`var`)
         }
         // Get copies because the loops are destructive
         val inEdges = node.inEdgeMap
@@ -141,23 +138,18 @@ class AliasGraph() {
         }
     }
 
-    fun addVariableToNode(node: AliasNode?, `var`: RealVariableAndType?) {
-        node!!.addVariable(`var`!!)
-        _varToNode[`var`] = node
+    fun addVariableToNode(node: AliasNode, `var`: RealVariableAndType) {
+        node.addVariable(`var`)
+        varToNode[`var`] = node
     }
 
-    fun removeVariableFromNode(node: AliasNode?, `var`: RealVariableAndType?) {
-        if (node != null) {
-            node.removeVariable(`var`!!)
-            _varToNode.remove(`var`)
-        }
+    fun removeVariableFromNode(node: AliasNode, `var`: RealVariableAndType) {
+        node.removeVariable(`var`)
+        varToNode.remove(`var`)
     }
 
-    val nodes: Set<AliasNode?>
-        get() = _nodes
-
-    fun lookupVar(`var`: RealVariableAndType?): AliasNode? {
-        return _varToNode[`var`]
+    fun lookupVar(`var`: RealVariableAndType): AliasNode? {
+        return varToNode[`var`]
     }
 
     // Traverse set of nodes in the graph to find ones that either:
@@ -171,7 +163,7 @@ class AliasGraph() {
         do {
             changed = false
             val nodesToRemove: MutableSet<AliasNode> = HashSet()
-            for (n in _nodes) {
+            for (n in nodesSet) {
                 val numVars = n.variables.size
                 val numOutEdges = n.outEdgeMap.size
                 val numInEdges = n.inEdgeMap.size
@@ -193,7 +185,7 @@ class AliasGraph() {
 
     // Removes all edges associated with each node in graph.
     fun removeHeapAliases() {
-        for (node in _nodes) {
+        for (node in nodesSet) {
             // Get copies because the loops are destructive
             val inEdges = node.inEdgeMap
             for ((key, value) in inEdges) {
@@ -203,62 +195,6 @@ class AliasGraph() {
             for ((key, value) in outEdges) {
                 value.removeInEdge(key)
             }
-        }
-    }
-
-    // Removes all local variables from the graph.
-    // Algorithm:
-    // 1. In every node that contains variables to be remmapted (i.e. arguments,
-    //    return variable, this), we remove all variables that won't.
-    // 2. We keep all nodes that connect with a remmaping node. That is they have
-    //    at least one in or out edge to a remmaping node or to a node that
-    //    connects with them.
-    // 3. We remove the remaining nodes.
-    fun removeLocalVars(variablesToMap: Set<RealVariableAndType?>, callerVariables: Set<RealVariableAndType?>) {
-        val checked: MutableSet<AliasNode> = HashSet()
-        val toBeRemoved: MutableSet<AliasNode?> = HashSet(_nodes)
-
-        // Step 1
-        for (`var` in variablesToMap) {
-            val node = lookupVar(`var`)
-            if (node != null && !checked.contains(node)) {
-                checked.add(node)
-                toBeRemoved.remove(node)
-                val allVars: Set<RealVariableAndType> = HashSet(node.variables)
-                for (localVar in allVars) {
-                    if (!variablesToMap.contains(localVar) && !callerVariables.contains(localVar)) {
-                        node.removeVariable(localVar)
-                        _varToNode.remove(localVar)
-                    }
-                }
-            }
-        }
-
-        // Step 2
-        while (checked.size > 0) {
-            val temp: Set<AliasNode> = HashSet(checked)
-            checked.clear()
-            for (node in temp) {
-                val inNodes = node.inEdgeMap.values
-                for (inNode in inNodes) {
-                    if (toBeRemoved.contains(inNode)) {
-                        checked.add(inNode)
-                        toBeRemoved.remove(inNode)
-                    }
-                }
-                val outNodes = node.outEdgeMap.values
-                for (outNode in outNodes) {
-                    if (toBeRemoved.contains(outNode)) {
-                        checked.add(outNode)
-                        toBeRemoved.remove(outNode)
-                    }
-                }
-            }
-        }
-
-        // Step 3
-        for (node in toBeRemoved) {
-            if (!callerVariables.containsAll(node!!.variables)) removeNode(node)
         }
     }
 
@@ -285,9 +221,9 @@ class AliasGraph() {
 		}
 	}
 	*/
-    fun varsOnCall(mapping: Map<RealVariableAndType?, List<RealVariableAndType?>>) {
+    fun varsOnCall(mapping: Map<RealVariableAndType, List<RealVariableAndType>>) {
         for (from in mapping.keys) {
-            var node = _varToNode[from]
+            var node = varToNode[from]
             if (node != null) {
                 for (to in mapping[from]!!) addVariableToNode(node, to)
             } else {
@@ -295,21 +231,6 @@ class AliasGraph() {
                 addNode(node)
                 addVariableToNode(node, from)
                 for (to in mapping[from]!!) addVariableToNode(node, to)
-            }
-        }
-    }
-
-    fun varsOnReturn() {
-        for (node in _nodes) {
-            val variables: Set<RealVariableAndType> = HashSet(
-                node.variables
-            )
-            for (`var` in variables) {
-                removeVariableFromNode(node, `var`)
-                //if (var.startsWith("[")) {
-                //System.out.println("[var]: " + var);
-                //System.out.println("var: " + var.substring(1, var.length() - 1));
-                addVariableToNode(node, `var`)
             }
         }
     }
@@ -326,8 +247,8 @@ class AliasGraph() {
         if (graph1 == null || graph2 == null) return
         val oldToNewNode: MutableMap<Pair<AliasNode?, AliasNode?>, AliasNode> = HashMap()
         // Step 1
-        for (oldNode1 in graph1._nodes) {
-            for (oldNode2 in graph2._nodes) {
+        for (oldNode1 in graph1.nodesSet) {
+            for (oldNode2 in graph2.nodesSet) {
                 val newNode = intersectVars(oldNode1, oldNode2)
                 oldToNewNode[Pair(oldNode1, oldNode2)] = newNode
                 addNode(newNode)
@@ -335,8 +256,8 @@ class AliasGraph() {
         }
 
         // Step 2
-        for (oldNode1 in graph1._nodes) {
-            for (oldNode2 in graph2._nodes) {
+        for (oldNode1 in graph1.nodesSet) {
+            for (oldNode2 in graph2.nodesSet) {
                 intersectNodes(oldNode1, oldNode2, oldToNewNode)
             }
         }
@@ -358,21 +279,22 @@ class AliasGraph() {
     }
 
     fun allAliases(accessPath: RealVariable): Set<RealVariableAndType>? {
-        val startNode = lookupVar(getRVATfromRV(accessPath)) ?: return null
+        val startNode = getRVATfromRV(accessPath)?.let { lookupVar(it) } ?: return null
         return HashSet(startNode.variables)
     }
 
     fun removeVar(`var`: RealVariableAndType): Boolean {
         val nodeRV = lookupVar(`var`) ?: return false
         nodeRV.removeVariable(`var`)
+        varToNode.remove(`var`)
         linkToRVAT.remove(`var`.variable)
-        return false
+        return true
     }
 
     fun sanityVariables(): Boolean {
-        for (node in _nodes) {
+        for (node in nodesSet) {
             for (`var` in node.variables) {
-                assert(_varToNode[`var`] == node)
+                assert(varToNode[`var`] == node)
             }
         }
         return true
@@ -380,15 +302,15 @@ class AliasGraph() {
 
     // properties that should hold if we only have move instructions
     fun sanityForMovesOnly(): Boolean {
-        for (node in _nodes) {
-            assert(!node.variables.isEmpty())
+        for (node in nodesSet) {
+            assert(node.variables.isNotEmpty())
         }
-        assert(HashSet(_varToNode.values).size == _nodes.size)
+        assert(HashSet(varToNode.values).size == nodesSet.size)
         return true
     }
 
     fun sanityEdges2way(): Boolean {
-        for (node in _nodes) {
+        for (node in nodesSet) {
             for ((key, value) in node.inEdgeMap) {
                 assert(value.outEdgeMap[key] == node)
             }
@@ -400,12 +322,19 @@ class AliasGraph() {
     }
 
     override fun toString(): String {
-        if (_nodes.isEmpty()) return "{}"
-        val nodes = StringBuilder()
-        for (node in _nodes) {
-            nodes.append("{").append(node.toString()).append("}")
+        if (nodesSet.isEmpty()) return "{}"
+        val strNodes = StringBuilder()
+        for (node in nodesSet) {
+            strNodes.append("{").append(node.toString()).append("}")
         }
-        return nodes.toString()
+        return strNodes.toString()
+    }
+
+    override fun hashCode(): Int {
+        var result = nodesSet.hashCode()
+        result = 31 * result + varToNode.hashCode()
+        result = 31 * result + linkToRVAT.hashCode()
+        return result
     }
 
     //	public String getGraphMustAliasPairs(String instruction) {
@@ -433,7 +362,7 @@ class AliasGraph() {
     //		return nodes;
     //	}
 
-     //	public String getGraphEdges(String instruction) {
+    //	public String getGraphEdges(String instruction) {
 
     //		String edges = "";
     //		for (AliasNode node: _nodes) {

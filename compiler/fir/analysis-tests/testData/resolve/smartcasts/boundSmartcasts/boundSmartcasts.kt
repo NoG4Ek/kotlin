@@ -76,19 +76,3 @@ fun test_7(d1: D, d2: D) {
     b as B
     b.bar() // should be OK
 }
-
-fun test_8() {
-    val y = Any()
-    val x = y
-    if (y is String) {
-        x.length
-    }
-}
-
-fun test_9() {
-    val y = Any()
-    val x = y
-    if (x is String) {
-        y.length
-    }
-}
